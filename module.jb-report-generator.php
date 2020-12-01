@@ -10,7 +10,7 @@
  
 SetupWebPage::AddModule(
         __FILE__, // Path to the current file, all other file names are relative to the directory containing this file
-        'jb-reportgen/2.6.200409',
+        'jb-report-generator/2.6.200409',
         array(
                 // Identification
                 //
@@ -27,12 +27,9 @@ SetupWebPage::AddModule(
                 // Components
                 //
                 'datamodel' => array(
-					// 'model.jb-reportgen.php',
-					'core/PopupMenuExtensionReportGenerator.class.inc.php',
-					'core/iReportTool.int.inc.php',
-					'core/RTParent.class.inc.php',
-					'core/RTTwig.class.inc.php',
-					'core/RTPDF.class.inc.php',
+					// 'model.jb-report-generator.php',
+					'app/core/applicationextension.class.inc.php',
+					'app/common/reporthelper.class.inc.php',
                 ),
                 'webservice' => array(
 
@@ -52,7 +49,33 @@ SetupWebPage::AddModule(
                 // Default settings
                 //
                 'settings' => array(
-                        // Module specific settings go here, if any
+					// Module specific settings go here, if any
+					// This is a demo configuration for a Windows system, usingn wkhtmltopdf 0.12
+					'extra_wkhtml' => array(
+						// On some systems you may have to set the path to the wkhtmltopdf executable
+						'binary' => 'C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe',
+						'ignoreWarnings' => false,
+						// 'tmpDir' => 'B:/temp',
+						'commandOptions' => array(
+							'useExec' => true, // Can help on Windows systems
+							'procEnv' => array(
+								// Check the output of 'locale -a' on your system to find supported languages
+								'LANG' => 'en_US.utf-8',
+							),
+						),
+						
+						// 'no-outline', // Make Chrome not complain
+						'margin-top'    => 10,
+						'margin-right'  => 10,
+						'margin-bottom' => 10,
+						'margin-left'   => 10,
+						
+						// HTTP credentials
+						// 'username' => 'user',
+						// 'password' => 'password',
+						
+					)
                 ),
         )
 );
+

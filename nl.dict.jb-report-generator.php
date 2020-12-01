@@ -7,8 +7,7 @@
  * Localized data
  */
 
-Dict::Add('EN US', 'English', 'English', array(
-
-	'UI:Menu:ReportGenerator:ShowReportTitleMissing' => htmlspecialchars('<title>').'-tag is missing'
+Dict::Add('NL NL', 'Dutch', 'Dutch', array(
 	
 ));
+

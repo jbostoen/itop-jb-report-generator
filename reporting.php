@@ -71,10 +71,6 @@ use \utils;
 		// Load ReportGeneratorExtensions (implementations of iReportGeneratorExtension)
 		$sModuleName = utils::GetCurrentModuleName();
 		$sModuleDir = APPROOT . '/env-' . utils::GetCurrentEnvironment() . '/' . utils::GetCurrentModuleDir(0);
-		$aCustomInterfaces = glob($sModuleDir.'/clients/*/*.php');
-		foreach($aCustomInterfaces as $sFile) {
-			require_once($sFile);
-		}
 		
 		// Validation
 		// --
@@ -149,7 +145,7 @@ use \utils;
 		// Get all classes implementing iReportTool
 		$aReportGeneratorExtensions = [];
 		foreach(get_declared_classes() as $sClassName) {
-			if(in_array('jb_itop_extensions\report_generator\tools\iReportTool', class_implements($sClassName))) {
+			if(in_array('jb_itop_extensions\report_generator\iReportTool', class_implements($sClassName))) {
 				$aReportGeneratorExtensions[] = $sClassName;
 			}
 		}
@@ -230,6 +226,7 @@ use \utils;
 			return [];
 		}
 		else {
+			
 			$sJSON = json_encode($oResult->objects);
 			
 			// Fix #1897 AttributeText (HTML): GetForJSON() -> GetEditValue() -> escaping of '&'
