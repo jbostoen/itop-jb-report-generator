@@ -86,19 +86,25 @@ interface iReport {
 	/**
 	 * Title of the menu item or button
 	 *
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View: 'details' or 'list'
+	 * 
 	 * @return \String
 	 *
 	 * @details Hint: you can use Dict::S('...')
 	 *
 	 */
-	public static function GetTitle();
+	public static function GetTitle(DBObjectSet $oSet_Objects, $sView);
 	
 	/**
 	 * URL Parameters
 	 *
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View: 'details' or 'list'
+	 * 
 	 * @return \Array
 	 */
-	public static function GetURLParameters();
+	public static function GetURLParameters(DBObjectSet $oSet_Objects, $sView);
 	
 	
 	/**
@@ -159,21 +165,27 @@ abstract class DefaultReport implements iReport {
 	/**
 	 * Title of the menu item or button
 	 *
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View: 'details' or 'list'
+	 * 
 	 * @return \String
 	 *
 	 * @details Hint: you can use Dict::S('...')
 	 *
 	 */
-	public static function GetTitle() {
+	public static function GetTitle(DBObjectSet $oSet_Objects, $sView) {
 		return '';
 	}
 	
 	/**
 	 * URL Parameters. Often 'template' or additional parameters for extended iReportTool implementations.
 	 *
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View: 'details' or 'list'
+	 * 
 	 * @return \Array
 	 */
-	public static function GetURLParameters() {
+	public static function GetURLParameters(DBObjectSet $oSet_Objects, $sView) {
 		return [];
 	}
 	
@@ -308,11 +320,11 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 					'&type='.$sView.
 					'&class='.$oSet_Objects->GetClass().
 					'&report='.$oReflector->getShortName().
-					(count($sReport::GetURLParameters()) > 0 ? '&'.http_build_query($sReport::GetURLParameters()) : '').
+					(count($sReport::GetURLParameters($oSet_Objects, $sView)) > 0 ? '&'.http_build_query($sReport::GetURLParameters($oSet_Objects, $sView)) : '').
 					'&filter='.htmlentities($oSet_Objects->GetFilter()->Serialize(), ENT_QUOTES, 'UTF-8')
 				;
 					
-				self::$menu_items[] = new URLPopupMenuItem($sUID, $sReport::GetTitle(), $sURL, $sReport::GetTarget());
+				self::$menu_items[] = new URLPopupMenuItem($sUID, $sReport::GetTitle($oSet_Objects, $sView), $sURL, $sReport::GetTarget());
 				
 			}
 			
