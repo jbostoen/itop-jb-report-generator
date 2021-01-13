@@ -307,9 +307,9 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 					'&exec_env='.utils::GetCurrentEnvironment().
 					'&type='.$sView.
 					'&class='.$oSet_Objects->GetClass().
-					'&filter='.htmlentities($oSet_Objects->GetFilter()->Serialize(), ENT_QUOTES, 'UTF-8').
 					'&report='.$oReflector->getShortName().
-					(count($sReport::GetURLParameters()) > 0 ? '&'.http_build_query($sReport::GetURLParameters()) : '')
+					(count($sReport::GetURLParameters()) > 0 ? '&'.http_build_query($sReport::GetURLParameters()) : '').
+					'&filter='.htmlentities($oSet_Objects->GetFilter()->Serialize(), ENT_QUOTES, 'UTF-8')
 				;
 					
 				self::$menu_items[] = new URLPopupMenuItem($sUID, $sReport::GetTitle(), $sURL, $sReport::GetTarget());

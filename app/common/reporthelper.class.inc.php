@@ -27,9 +27,9 @@ use \utils;
 abstract class RTParent {
 	
 	/**
-	 * @var \Integer $rank Rank. Lower number = goes first.
+	 * @var \Integer $iRank Rank. Lower number = goes first.
 	 */
-	public static $rank = 50;
+	public static $iRank = 50;
 	
 	/**
 	 * Constructor
@@ -193,12 +193,13 @@ abstract class RTTwig extends RTParent implements iReportTool {
 		// 2.7: Don't use utils::GetCurrentModuleDir(0).
 		// When new reports are added with a different extension/module, it should return that path instead.		
 		$sCurrentModuleDir = utils::GetAbsoluteModulePath($sReport::sModuleDir);
-		$sReportDir = $sCurrentModuleDir.'templates/'.$sClassName.'/'.$sType;
+		$sReportDir = $sCurrentModuleDir.'reports/templates/'.$sClassName.'/'.$sType;
 		$sReportFile = $sReportDir.'/'.$sTemplateName;
 		
 		// Prevent local file inclusion
-		if($sCurrentModuleDir != dirname(dirname(dirname(dirname($sReportFile)))).'/') {
-			throw new ApplicationException('Invalid type or template: '.$sReportFile);
+		// Mind: needs extra escaping!
+		if(!preg_match('/^[A-Za-z0-9\-_\\/\\\\:]{1,}\.[A-Za-z0-9]{1,}$/', $sReportFile)) {
+			throw new ApplicationException('Potential disallowed local file inclusion: "'.$sReportFile.'"');
 		}
 		elseif(file_exists($sReportFile) == false) {
 			throw new ApplicationException('Template does not exist: '.$sReportFile);
@@ -362,7 +363,7 @@ abstract class RTPDF extends RTTwig implements iReportTool {
 		
 		// If class doesn't exist, fail silently
 		if(class_exists('\mikehaertl\wkhtmlto\Pdf') == false) {
-			throw new ApplicationException('wkhtml seems not to be configured or installed properly.');
+			throw new ApplicationException('mikehaertl/phpwkhtmltopdf library seems to be missing.');
 		}
 		
 		try {
@@ -370,10 +371,9 @@ abstract class RTPDF extends RTTwig implements iReportTool {
 			// Get HTML for this report
 			$sHTML = self::GetReportFromTwigTemplate($aReportData);
 			
-			// TCPPDF w expected to change in iTop 2.7; wkhtml offers more options.
+			// TCPPDF was expected to change in iTop 2.7; wkhtml offers more options.
 			// However, wkhtmltopdf (stable = 0.12.5) does NOT support flex (uses older webkit version) 
 			// Limited changes required: .row -> display: -webkit-box;
-			require_once(APPROOT.'libext/vendor/autoload.php');
 			$oPDF = new \mikehaertl\wkhtmlto\Pdf();
 			
 			// For cross instances, allow settings to be defined in config-itop.php

@@ -1,0 +1,9 @@
+{
+    "require": {
+        "twig/twig": "^3.2",
+        "chillerlan/php-qrcode": "3.3",
+        "mikehaertl/phpwkhtmltopdf": "^2.4",
+        "components/jquery": "^3.5",
+        "twbs/bootstrap": "^4.5"
+    }
+}

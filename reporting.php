@@ -48,7 +48,7 @@ use \utils;
 	require_once(APPROOT.'/core/restservices.class.inc.php');
 	
 	// Autoloader (Twig, chillerlan\QRCode, ...
-	require_once(APPROOT . '/libext/vendor/autoload.php');
+	require_once('vendor/autoload.php');
 	
 	// Get iTop's Dict::S('string') so it can be exposed to Twig as well 
 	// require_once( APPROOT . '/application/utils.inc.php' );
@@ -160,7 +160,7 @@ use \utils;
 		// Sort based on 'rank' of each class
 		// Use case: block further processing
 		usort($aReportGeneratorExtensions, function($a, $b) {
-			return $a::$rank <=> $b::$rank;
+			return $a::$iRank <=> $b::$iRank;
 		});
 		
 		// Execute each ReportExtension

@@ -2,10 +2,10 @@
 
 ## How-to
 
-### Setting up PDF generation
+### ⚠ Setting up PDF generation
+
 This extension can use a wrapper to generate PDF documents.
 There's several PDF libraries available, each with their own benefits and limitations.
-
 Natively, this extension uses **mikehaertl/phpwkhtmltopdf** since it seemed to be most stable and easiest to use.
 TCPPDF was expected to change in iTop 2.7 and wkhtml offers more options.
 It's worth noting that it may not support more modern HTML/JS/CSS standards (such as flex).
@@ -115,6 +115,12 @@ attachment.fields.contents.filename
 For lists (single or multiple objects), you can use **item** and create things like **{% for item in items % } ... {% endfor %}**
 
 Attachments are also available for each item.
+
+
+#### Miscellaneous variables
+
+Available in templates using the built-in Twig reporting:
+* **itop.root_url**: iTop root url
 
 
 ### Using iTop language strings
