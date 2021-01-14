@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @copyright   Copyright (C) 2019-2020 Jeffrey Bostoen
+ * @copyright   Copyright (C) 2019-2021 Jeffrey Bostoen
  * @license     https://www.gnu.org/licenses/gpl-3.0.en.html
  * @version     2020-04-09 16:58:14
  *
@@ -17,6 +17,7 @@ use \ReflectionClass;
 
 // iTop internals
 use \ApplicationException;
+use \DBObjectSet;
 use \Dict;
 use \NiceWebPage;
 use \utils;
@@ -41,10 +42,13 @@ abstract class RTParent {
 	/**
 	 * Whether or not this extension is applicable
 	 *
+	 * @param \DBObjectSet[] $oSet_Objects CMDBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View. 'details', 'list'
+	 * *
 	 * @return \Boolean
 	 *
 	 */
-	public static function IsApplicable() {
+	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
 		
 		// This parent class should not be applicable.
 		return false;
@@ -54,12 +58,12 @@ abstract class RTParent {
 	/**
 	 * Rendering hook. Can enrich report data (fetching additional info).
 	 *
-	 * @var \Array $aReportData Report data
-	 * @var \CMDBObjectSet[] $oSet_Objects CMDBObjectSet of iTop objects which are being processed
+	 * @param \Array $aReportData Report data
+	 * @param \DBObjectSet[] $oSet_Objects DBObjectSet of iTop objects which are being processed
 	 *
 	 * @return void
 	 */
-	public static function EnrichData(&$aReportData, $oSet_Objects) {
+	public static function EnrichData(&$aReportData, DBObjectSet $oSet_Objects) {
 		
 		// Enrich data
 		
@@ -68,12 +72,12 @@ abstract class RTParent {
 	/**
 	 * Action hook
 	 *
-	 * @var \Array $aReportData Report data
-	 * @var \CMDBObjectSet[] $oSet_Objects CMDBObjectSet of iTop objects which are being processed
+	 * @param \Array $aReportData Report data
+	 * @param \DBObjectSet[] $oSet_Objects DBObjectSet of iTop objects which are being processed
 	 *
 	 * @return void
 	 */
-	public static function DoExec($aReportData, $oSet_objects) {
+	public static function DoExec($aReportData, DBObjectSet $oSet_Objects) {
 		
 		// Do stuff
 		
@@ -82,7 +86,7 @@ abstract class RTParent {
 	/**
 	 * Outputs error (from Exception)
 	 *
-	 * @var \Exception $e Exception
+	 * @param \Exception $e Exception
 	 *
 	 * @return void
 	 */
@@ -106,12 +110,12 @@ abstract class RTParent {
 abstract class RTTwig extends RTParent implements iReportTool {
 	
 	/**
-	 * Whether or not this extension is applicable
+	 * @inheritDoc
 	 *
 	 * @return \Boolean
 	 *
 	 */
-	public static function IsApplicable() {
+	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
 		
 		// Always applicable when no action is specified.
 		$sAction = utils::ReadParam('action', '', false, 'string');		
@@ -122,11 +126,11 @@ abstract class RTTwig extends RTParent implements iReportTool {
 	/**
 	 * Rendering hook
 	 *
-	 * @var \Array $aReportData Report data
-	 * @var \CMDBObjectSet[] $oSet_Objects CMDBObjectSet of iTop objects which are being processed
+	 * @param \Array $aReportData Report data
+	 * @param \CMDBObjectSet[] $oSet_Objects DBObjectSet of iTop objects which are being processed
 	 *
 	 */
-	public static function EnrichData(&$aReportData, $oSet_Objects) {
+	public static function EnrichData(&$aReportData, DBObjectSet $oSet_Objects) {
 		
 		// Enrich data with iTop setting (remove trailing /)
 		$aReportData['itop']['root_url'] = substr(utils::GetAbsoluteUrlAppRoot(), 0, -1);
@@ -146,11 +150,11 @@ abstract class RTTwig extends RTParent implements iReportTool {
 	/**
 	 * Action hook
 	 *
-	 * @var \Array $aReportData Report data
-	 * @var \CMDBObjectSet[] $oSet_Objects CMDBObjectSet of iTop objects which are being processed
+	 * @param \Array $aReportData Report data
+	 * @param \DBObjectSet[] $oSet_Objects DBObjectSet of iTop objects which are being processed
 	 *
 	 */
-	public static function DoExec($aReportData, $oSet_Objects) {
+	public static function DoExec($aReportData, DBObjectSet $oSet_Objects) {
 		
 		try {
 		
@@ -222,7 +226,7 @@ abstract class RTTwig extends RTParent implements iReportTool {
 	/**
 	 * Returns content (HTML, XML, ...) of report
 	 *
-	 * @var \Array $aReportData Hashtable
+	 * @param \Array $aReportData Hashtable
 	 *
 	 * @return \String Content
 	 */
@@ -292,12 +296,12 @@ abstract class RTTwig extends RTParent implements iReportTool {
 abstract class RTPDF extends RTTwig implements iReportTool {
 	
 	/**
-	 * Whether or not this extension is applicable
+	 * @inheritDoc
 	 *
 	 * @return \Boolean
 	 *
 	 */
-	public static function IsApplicable() {
+	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
 		
 		// Generic, so no.
 		$sAction = utils::ReadParam('action', '', false, 'string');
@@ -306,13 +310,12 @@ abstract class RTPDF extends RTTwig implements iReportTool {
 	}
 	
 	/**
-	 * Action hook on rendering the entire template
-	 *
-	 * @var \Array $aReportData Report data
-	 * @var \CMDBObjectSet[] $oSet_Objects CMDBObjectSet of iTop objects which are being processed
+	 * @inheritDoc
+	 * 
+	 * @return void
 	 *
 	 */
-	public static function DoExec($aReportData, $oSet_Objects) {
+	public static function DoExec($aReportData, DBObjectSet $oSet_Objects) {
 		
 		// If class doesn't exist, fail silently
 		if(class_exists('\mikehaertl\wkhtmlto\Pdf') == false) {
@@ -365,7 +368,7 @@ abstract class RTPDF extends RTTwig implements iReportTool {
 	/**
 	 * Get PDF object based on report data.
 	 *
-	 * @var \Array $aReportData Hashtable
+	 * @param \Array $aReportData Hashtable
 	 *
 	 * @return \mikehaertl\wkhtmlto\Pdf PDF Object
 	 */

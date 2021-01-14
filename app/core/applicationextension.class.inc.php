@@ -29,11 +29,14 @@ interface iReportTool {
 	
 	/**
 	 * Whether or not this extension is applicable
+	 * 
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View. 'details', 'list'
 	 *
 	 * @return \Boolean
 	 *
 	 */
-	public static function IsApplicable();
+	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView);
 	
 	/**
 	 * Rendering hook
@@ -42,7 +45,7 @@ interface iReportTool {
 	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
 	 *
 	 */
-	public static function EnrichData(&$aReportData, $oSet_Objects);
+	public static function EnrichData(&$aReportData, DBObjectSet $oSet_Objects);
 	
 	/**
 	 * Action hook
@@ -51,7 +54,7 @@ interface iReportTool {
 	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
 	 *
 	 */
-	public static function DoExec($aReportData, $oSet_Objects);
+	public static function DoExec($aReportData, DBObjectSet $oSet_Objects);
 
 }
 
@@ -317,7 +320,7 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 					'&exec_module='.utils::GetCurrentModuleName().
 					'&exec_page=reporting.php'.
 					'&exec_env='.utils::GetCurrentEnvironment().
-					'&type='.$sView.
+					'&view='.$sView.
 					'&class='.$oSet_Objects->GetClass().
 					'&report='.$oReflector->getShortName().
 					(count($sReport::GetURLParameters($oSet_Objects, $sView)) > 0 ? '&'.http_build_query($sReport::GetURLParameters($oSet_Objects, $sView)) : '').

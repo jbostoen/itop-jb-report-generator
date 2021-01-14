@@ -4,7 +4,7 @@
  * @license     https://www.gnu.org/licenses/gpl-3.0.en.html
  * @version     2020-04-09 16:58:14
  *
- * Shows report; based on available Twig templates.
+ * Shows report.
  *
  * @todo Translate some errors which should never be seen in the first place
  */
@@ -14,11 +14,13 @@
  * $_REQUEST should contain: 
  * class:               String. Class name
  * filter:              String. OQL Query
- * type: 				String. 'details' or 'list'
+ * view: 				String. 'details' or 'list'
  *
  * Optional:
- * template: 			String. Report name. For convenience, use detail/<filename>.twig and list/<filename>.twig . Default report (HTML)
+ * template: 			String. Report name. For convenience, use detail/<filename>.twig and list/<filename>.twig . Default report (HTML - Twig)
  * action:				String. Name of custom action ('show_pdf')
+ * 
+ * other custom defined parameters may be specified.
 */
 
 namespace jb_itop_extensions\report_generator;
@@ -58,14 +60,13 @@ use \utils;
 	try {
 			
 		// Logging in exposed :current_contact_id in OQL
-		if (LoginWebPage::EXIT_CODE_OK != LoginWebPage::DoLoginEx(null /* any portal */, false, LoginWebPage::EXIT_RETURN))
-		{
+		if(LoginWebPage::EXIT_CODE_OK != LoginWebPage::DoLoginEx(null /* any portal */, false, LoginWebPage::EXIT_RETURN)) {
 			throw new SecurityException('You must be logged in');
 		}
 		
 		// utils::ReadParam( $sName, $defaultValue = "", $bAllowCLI = false, $sSanitizationFilter = 'parameter' )
 		$sClassName = utils::ReadParam('class', '', false, 'class');
-		$sType = utils::ReadParam('type', '', false, 'string');
+		$sView = utils::ReadParam('view', '', false, 'string');
 		$sFilter = utils::ReadParam('filter', '', false, 'raw_data');
 		
 		// Load ReportGeneratorExtensions (implementations of iReportGeneratorExtension)
@@ -84,13 +85,13 @@ use \utils;
 			throw new ApplicationException(Dict::Format('UI:Error:1ParametersMissing', 'filter'));
 		}
 		
-		if(empty($sType) == true) {
-			throw new ApplicationException(Dict::Format('UI:Error:1ParametersMissing', 'type'));
+		if(empty($sView) == true) {
+			throw new ApplicationException(Dict::Format('UI:Error:1ParametersMissing', 'view'));
 		}
 		
 		// Valid type?
-		if(in_array($sType, ['details', 'list']) == false) {
-			throw new ApplicationException('Valid values for type are: details, list');
+		if(in_array($sView, ['details', 'list']) == false) {
+			throw new ApplicationException('Valid values for view are: details, list');
 		}
 		
 		$oFilter = DBObjectSearch::unserialize($sFilter);
@@ -130,7 +131,7 @@ use \utils;
 			
 		}
 		
-		if($sType == 'details') {
+		if($sView == 'details') {
 			$aReportData['item'] = array_values($aSet_Objects)[0];
 		}
 		else {
@@ -143,29 +144,29 @@ use \utils;
 		$aReportData['application']['url'] = utils::GetDefaultUrlAppRoot();
 		
 		// Get all classes implementing iReportTool
-		$aReportGeneratorExtensions = [];
+		$aReportTools = [];
 		foreach(get_declared_classes() as $sClassName) {
 			if(in_array('jb_itop_extensions\report_generator\iReportTool', class_implements($sClassName))) {
-				$aReportGeneratorExtensions[] = $sClassName;
+				$aReportTools[] = $sClassName;
 			}
 		}
 		
-		// Enrich
-		foreach($aReportGeneratorExtensions as $sClassName) {
-			if($sClassName::IsApplicable() == true) {
+		// Enrich first
+		foreach($aReportTools as $sClassName) {
+			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
 				$sClassName::EnrichData($aReportData, $oSet_Objects);
 			}
 		}
 		
 		// Sort based on 'rank' of each class
 		// Use case: block further processing
-		usort($aReportGeneratorExtensions, function($a, $b) {
+		usort($aReportTools, function($a, $b) {
 			return $a::$iRank <=> $b::$iRank;
 		});
 		
 		// Execute each ReportExtension
-		foreach($aReportGeneratorExtensions as $sClassName) {
-			if($sClassName::IsApplicable() == true) {
+		foreach($aReportTools as $sClassName) {
+			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
 				$sClassName::DoExec($aReportData, $oSet_Objects);
 			}
 		}
