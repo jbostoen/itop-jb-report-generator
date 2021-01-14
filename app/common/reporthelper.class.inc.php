@@ -131,6 +131,16 @@ abstract class RTTwig extends RTParent implements iReportTool {
 		// Enrich data with iTop setting (remove trailing /)
 		$aReportData['itop']['root_url'] = substr(utils::GetAbsoluteUrlAppRoot(), 0, -1);
 		
+		// Enrich with common libraries
+		$sModuleUrl = utils::GetCurrentModuleUrl();
+		
+		// JavaScript
+		$aReportData['lib']['jquery']['js'] = $sModuleUrl.'/vendor/components/jquery/jquery.min.js';
+		$aReportData['lib']['bootstrap']['js'] = $sModuleUrl.'/vendor/twbs/bootstrap/dist/js/bootstrap.min.js';
+		
+		// CSS
+		$aReportData['lib']['bootstrap']['css'] = $sModuleUrl.'/vendor/twbs/bootstrap/dist/css/bootstrap.min.css';
+		
 	}
 	
 	/**

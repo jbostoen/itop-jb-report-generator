@@ -120,7 +120,10 @@ Attachments are also available for each item.
 #### Miscellaneous variables
 
 Available in templates using the built-in Twig reporting:
-* **itop.root_url**: iTop root url
+* **itop.root_url**: iTop root URL
+* **lib.bootstrap.css**: URL to CSS for jQuery
+* **lib.bootstrap.js**: URL to JavaScript for Twitter BootStrap
+* **lib.jquery.js**: URL to JavaScript for jQuery
 
 
 ### Using iTop language strings
