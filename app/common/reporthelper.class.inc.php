@@ -23,9 +23,200 @@ use \NiceWebPage;
 use \utils;
 
 /**
+ * Interface iReportTool.
+ * Implement this interface to enrich data or perform other actions, for example generating a PDF.
+ */
+interface iReportTool {
+	
+	/**
+	 * Whether or not this extension is applicable
+	 * 
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View. 'details', 'list'
+	 *
+	 * @return \Boolean
+	 *
+	 */
+	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView);
+	
+	/**
+	 * Rendering hook
+	 *
+	 * @param \Array $aReportData Twig data
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 *
+	 */
+	public static function EnrichData(&$aReportData, DBObjectSet $oSet_Objects);
+	
+	/**
+	 * Action hook
+	 *
+	 * @param \Array $aReportData Report data
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 *
+	 */
+	public static function DoExec($aReportData, DBObjectSet $oSet_Objects);
+
+}
+
+/**
+ * Interface iReport.
+ * Implement this interface to hook into the UI of iTop's console (backend).
+ */
+interface iReport {
+	
+	/**
+	 * If a button should be shown instead of a menu item
+	 *
+	 * @return \Boolean
+	 *
+	 */
+	public static function ForceButton();
+	
+	/**
+	 * Returns the precedence (order. Low = first, high = later)
+	 *
+	 * @return \Float
+	 *
+	 */
+	public static function GetPrecedence();
+	
+	/**
+	 * Gets the HTML target. Uusally '_blank' or '_self'
+	 *
+	 * @return \String
+	 *
+	 * @details Hint: you can use Dict::S('...')
+	 *
+	 */
+	public static function GetTarget();
+	
+	/**
+	 * Title of the menu item or button
+	 *
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View: 'details' or 'list'
+	 * 
+	 * @return \String
+	 *
+	 * @details Hint: you can use Dict::S('...')
+	 *
+	 */
+	public static function GetTitle(DBObjectSet $oSet_Objects, $sView);
+	
+	/**
+	 * URL Parameters
+	 *
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View: 'details' or 'list'
+	 * 
+	 * @return \Array
+	 */
+	public static function GetURLParameters(DBObjectSet $oSet_Objects, $sView);
+	
+	
+	/**
+	 * Whether or not this extension is applicable
+	 *
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View: 'details' or 'list'
+	 *
+	 * @return \Boolean
+	 *
+	 */
+	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView);
+	
+}
+
+/**
+ * Class DefaultReport just represents a basic report to extend.
+ */
+abstract class DefaultReport implements iReport {
+	
+	/**
+	 * @var \String $sModuleName Name of the module where this is defined
+	 */
+	public const sModuleDir = 'jb-report-generator';
+	
+	/**
+	 * If a button should be shown instead of a menu item
+	 *
+	 * @return \Boolean
+	 *
+	 */
+	public static function ForceButton() {
+		return true;
+	}
+	
+	/**
+	 * Returns the precedence (order. Low = first, high = later)
+	 *
+	 * @return \Float
+	 *
+	 */
+	public static function GetPrecedence() {
+		return 100;
+	}
+	
+	/**
+	 * Gets the HTML target. Uusally '_blank' or '_self'
+	 *
+	 * @return \String
+	 *
+	 * @details Hint: you can use Dict::S('...')
+	 *
+	 */
+	public static function GetTarget() {
+		return '_blank';
+	}
+	
+	/**
+	 * Title of the menu item or button
+	 *
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View: 'details' or 'list'
+	 * 
+	 * @return \String
+	 *
+	 * @details Hint: you can use Dict::S('...')
+	 *
+	 */
+	public static function GetTitle(DBObjectSet $oSet_Objects, $sView) {
+		return '';
+	}
+	
+	/**
+	 * URL Parameters. Often 'template' or additional parameters for extended iReportTool implementations.
+	 *
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View: 'details' or 'list'
+	 * 
+	 * @return \Array
+	 */
+	public static function GetURLParameters(DBObjectSet $oSet_Objects, $sView) {
+		return [];
+	}
+	
+	
+	/**
+	 * Whether or not this extension is applicable
+	 *
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View: 'details' or 'list'
+	 *
+	 * @return \Boolean
+	 *
+	 */
+	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
+		return false;
+	}
+	
+}
+
+/**
  * Main class which can be used as a parent, so some properties are automatically inherited
  */
-abstract class RTParent {
+abstract class RTParent implements iReportTool {
 	
 	/**
 	 * @var \Integer $iRank Rank. Lower number = goes first.
@@ -187,7 +378,12 @@ abstract class RTTwig extends RTParent implements iReportTool {
 	}
 	
 	/**
-	 * Returns default filename of report
+	 * Returns default filename of report.
+	 * The current implementation expects the reports to be in the module's directory as 'reports/templates/className/type/templateName.ext'; 
+	 * where 
+	 *  "className" is an iTop class and 
+	 *  "type" is usually "details" or "list"
+	 *  "templateName.ext" is free to choose
 	 *
 	 * @return \String Filename
 	 */
@@ -199,7 +395,7 @@ abstract class RTTwig extends RTParent implements iReportTool {
 		$sTemplateName = utils::ReadParam('template', '', false, 'string');
 		$sReport = 'jb_itop_extensions\\report_generator\\'.utils::ReadParam('report', '', false, 'string');
 		
-		// 'class' and 'type' were already checked		
+		// Values for 'class' and 'type' were already validated		
 		if(empty($sTemplateName) == true) {
 			throw new ApplicationException(Dict::Format('UI:Error:1ParametersMissing', 'template'));
 		}

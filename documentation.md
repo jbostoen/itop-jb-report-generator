@@ -11,7 +11,7 @@ TCPPDF was expected to change in iTop 2.7 and wkhtml offers more options.
 It's worth noting that it may not support more modern HTML/JS/CSS standards (such as flex).
 This is due to the fact that wkhtmltopdf (<= 0.12.5) uses an older webkit version.
 
-Default settings (for Windows) can be seen in **reporthelper.class.inc.php** -> RTPDF::GetPDFObject().
+Default settings (for Windows) can be seen in **reporthelper.class.inc.php** -> ```RTPDF::GetPDFObject()```
 They can be overruled in the module settings for this extension, found in iTop configuration file.
 Edit the default settings found under **extras_wkhtml**.
 
@@ -20,7 +20,7 @@ This extension has been tested with wkhtmltopdf 0.12.6.
 https://wkhtmltopdf.org/status.html
 
 This might change to Puppeteer at a more suitable point, but Puppeteer also had implementation issues.
-A candidate is https://github.com/rialto-php/puphpeteer ; however it requires PHP 7.3.
+A candidate is https://github.com/rialto-php/puphpeteer ; however it requires PHP 7.4.
 
 
 ### Adding reports
@@ -48,32 +48,41 @@ use \Dict;
 /**
  * Class DefaultReport just represents a basic report to extend.
  */
-abstract class ReporUserRequest_Details extends DefaultReport implements iReport {
-		
+abstract class ReportUserRequest_Details extends DefaultReport implements iReport {
+	
+	/**
+	 * @var \String $sModuleDir Name of current module dir
+	 */
 	public const sModuleDir = 'jb-report-generator-example';
 	
 	/**
 	 * Title of the menu item or button
+	 *
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View: 'details' or 'list'
 	 *
 	 * @return \String
 	 *
 	 * @details Hint: you can use Dict::S('...')
 	 *
 	 */
-	public static function GetTitle() {
+	public static function GetTitle(DBObjectSet $oSet_Objects, $sView) {
 		return Dict::S('UI:Report:SomeDescription');
 	}
 	
 	/**
 	 * URL Parameters. Often 'template' or additional parameters for extended iReportTool implementations.
 	 *
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View: 'details' or 'list'
+	 *
 	 * @return \Array
 	 */
-	public static function GetURLParameters() {
+	public static function GetURLParameters(DBObjectSet $oSet_Objects, $sView) {
 		return [
-			'type' => 'details',
+			'type' => $sView,
 			'template' => 'ticket.html'
-			// Also natively supported is one of these:
+			// Some actions which are supported by default (if no 'action' key is specified, it will just render a HTML template):
 			// 'action' => 'show_pdf',
 			// 'action' => 'download_pdf',
 		];
@@ -100,11 +109,15 @@ abstract class ReporUserRequest_Details extends DefaultReport implements iReport
 
 #### Single item (details view)
 
-For details (single object), use the variable **item**. It exposes **key** and **fields** (see iTop REST Documentation). 
-Example: **item.fields.description**
+For details (single object), use the variable ```item```. It exposes ```key``` and ```fields``` (see iTop REST Documentation, it's similar). 
+Example: 
+```
+item.fields.description
+```
  
-As a bonus: it's possible to use *item.attachments*. 
-**{% for attachment in item.attachments %} ... {% endfor %}** exposes the attachment's field properties:
+As a bonus: it's possible to use ```item.attachments```. 
+```{% for attachment in item.attachments %} ... {% endfor %}``` exposes the attachment's field properties:
+
 ```
 attachment.fields.contents.mimetype
 attachment.fields.contents.data
@@ -112,7 +125,7 @@ attachment.fields.contents.filename
 ```
 
 #### Multiple items (list view)
-For lists (single or multiple objects), you can use **item** and create things like **{% for item in items % } ... {% endfor %}**
+For lists (single or multiple objects), you can use ```item``` and create things like ```{% for item in items % } ... {% endfor %}```
 
 Attachments are also available for each item.
 
@@ -120,14 +133,14 @@ Attachments are also available for each item.
 #### Miscellaneous variables
 
 Available in templates using the built-in Twig reporting:
-* **itop.root_url**: iTop root URL
-* **lib.bootstrap.css**: URL to CSS for jQuery
-* **lib.bootstrap.js**: URL to JavaScript for Twitter BootStrap
-* **lib.jquery.js**: URL to JavaScript for jQuery
+* ```itop.root_url```: iTop root URL
+* ```lib.bootstrap.css```: URL to CSS for Twitter BootStrap
+* ```lib.bootstrap.js```: URL to JavaScript for Twitter BootStrap
+* ```lib.jquery.js```: URL to JavaScript for jQuery
 
 
 ### Using iTop language strings
-There's a Twig Filter named **dict_s** in templates.
+There's a Twig Filter named ```dict_s``` in templates.
 Where in iTop code this would be ```Dict::S('languagestring')```, 
 but it's the same as in iTop Portal templates.
 

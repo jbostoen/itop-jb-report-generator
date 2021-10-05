@@ -25,17 +25,17 @@ Use composer to install and update all required packages (composer.json is inclu
 
 | package 	                 | version | comment                                                         |
 |--------------------------- |-------- | --------------------------------------------------------------  |
-| twig/twig                  | 3.2.1   | Optional. QR-code generation. Starting 4.0: requires PHP 7.4    |
-  * Twig 3.x
+| twig/twig                  | 3.3     | Templates                                                       |
+
 
 **Optional packages**:
 
 | package 	                 | version | comment                                                         |
 |--------------------------- |-------- | --------------------------------------------------------------  |
 | chillerlan/php-qrcode      | 3.4     | Optional. QR-code generation. Starting 4.0: requires PHP 7.4    |
-| mikehaertl/phpwkhtmltopdf  | 2.4.2   | Optional. For PDF reporting.                                    |
-| components/jquery          | 3.5.1   | Optional. For use of jQuery in templates.                       |
-| twbs/bootstrap             | 4.5.3   | Optional. For use of Twitter BootStrap in templates.            |
+| mikehaertl/phpwkhtmltopdf  | 2.5.0   | Optional. For PDF reporting.                                    |
+| components/jquery          | 3.6.0   | Optional. For use of jQuery in templates.                       |
+| twbs/bootstrap             | 5.5.1   | Optional. For use of Twitter BootStrap in templates.            |
 
 
 
