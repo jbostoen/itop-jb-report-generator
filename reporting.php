@@ -31,9 +31,8 @@ use \CMDBObjectSet;
 use \DBObjectSearch;
 use \Dict;
 use \LoginWebPage;
-use \MetaModel;
+// use \MetaModel;
 use \NiceWebPage;
-use \RestResultWithObjects;
 use \SecurityException;
 use \UserRights;
 use \utils;
@@ -107,7 +106,7 @@ use \utils;
 			}
 		*/
 		
-		$aSet_Objects = ObjectSetToArray($oSet_Objects);
+		$aSet_Objects = ReportGeneratorHelper::ObjectSetToArray($oSet_Objects);
 		
 		// Get keys to build one OQL Query
 		$aKeys = [ -1];
@@ -119,7 +118,7 @@ use \utils;
 		$oFilter_Attachments->AddCondition('item_id', $aKeys, 'IN');
 		$oFilter_Attachments->AddCondition('item_class', $sClassName);
 		$oSet_Attachments = new CMDBObjectSet($oFilter_Attachments);
-		$aSet_Attachments = ObjectSetToArray($oSet_Attachments);
+		$aSet_Attachments = ReportGeneratorHelper::ObjectSetToArray($oSet_Attachments);
 		
 		foreach($aSet_Objects as &$aObject) {
 			
@@ -139,7 +138,7 @@ use \utils;
 		}
 		
 		// Expose some variables so they can be used in reports
-		$aReportData['current_contact'] = ObjectToArray(UserRights::GetUserObject());
+		$aReportData['current_contact'] = ReportGeneratorHelper::ObjectToArray(UserRights::GetUserObject());
 		$aReportData['request'] = $_REQUEST;
 		$aReportData['application']['url'] = utils::GetDefaultUrlAppRoot();
 		
@@ -153,6 +152,7 @@ use \utils;
 		
 		// Enrich first
 		foreach($aReportTools as $sClassName) {
+			$oSet_Objects->Rewind();
 			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
 				$sClassName::EnrichData($aReportData, $oSet_Objects);
 			}
@@ -166,6 +166,7 @@ use \utils;
 		
 		// Execute each ReportExtension
 		foreach($aReportTools as $sClassName) {
+			$oSet_Objects->Rewind();
 			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
 				$sClassName::DoExec($aReportData, $oSet_Objects);
 			}
@@ -180,61 +181,4 @@ use \utils;
 		$oP->output();
 	}
 
-
-	/**
-	 * Returns array (similar to REST/JSON) from object set
-	 *
-	 * @param \CMDBObjectSet $oObjectSet iTop object set
-	 *
-	 * @return Array
-	 */
-	function ObjectSetToArray(CMDBObjectSet $oObjectSet) {
-		
-		$aResult = [];
-		while($oObject = $oObjectSet->Fetch()) {
-			$aResult[] = ObjectToArray($oObject);
-		}
-		
-		return $aResult;
-		
-	}
-
-	/**
-	 * Returns array (similar to REST/JSON) from object
-	 *
-	 * @param \DBObject $oObject iTop object
-	 *
-	 * @return Array
-	 *
-	 * @details 
-	 * Strangely enough ObjectSetToArray takes a CMDBObjectSet, for instance of Attachments.
-	 * However on processing them, it turns into a DBObject?
-	 *
-	 */
-	function ObjectToArray(DBObject $oObject) {
-		
-		$oResult = new RestResultWithObjects();
-		$aShowFields = [];
-		$sClass = get_class($oObject);
-		
-		foreach(MetaModel::ListAttributeDefs($sClass) as $sAttCode => $oAttDef) {
-			$aShowFields[$sClass][] = $sAttCode;
-		}
-		
-		$oResult->AddObject(0, '', $oObject, $aShowFields);
-		
-		if(is_null($oResult->objects) == true) {
-			return [];
-		}
-		else {
-			
-			$sJSON = json_encode($oResult->objects);
-			
-			// Fix #1897 AttributeText (HTML): GetForJSON() -> GetEditValue() -> escaping of '&'
-			$sJSON = str_replace('&amp;', '&', $sJSON);
-			
-			return current(json_decode($sJSON, true));
-		}
-		
-	}
 	

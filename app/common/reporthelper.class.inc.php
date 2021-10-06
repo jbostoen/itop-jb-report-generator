@@ -17,10 +17,78 @@ use \ReflectionClass;
 
 // iTop internals
 use \ApplicationException;
+use \CMDBObjectSet;
+use \DBObject;
 use \DBObjectSet;
 use \Dict;
+use \MetaModel;
 use \NiceWebPage;
+use \RestResultWithObjects;
 use \utils;
+
+/**
+ * Abstract class ReportGeneratorHelper. Helper functions.
+ */
+abstract class ReportGeneratorHelper {
+
+	/**
+	 * Returns array (similar to REST/JSON) from object set
+	 *
+	 * @param \CMDBObjectSet $oObjectSet iTop object set
+	 *
+	 * @return Array
+	 */
+	public static function ObjectSetToArray(CMDBObjectSet $oObjectSet) {
+		
+		$aResult = [];
+		while($oObject = $oObjectSet->Fetch()) {
+			$aResult[] = self::ObjectToArray($oObject);
+		}
+		
+		return $aResult;
+		
+	}
+
+	/**
+	 * Returns array (similar to REST/JSON) from object
+	 *
+	 * @param \DBObject $oObject iTop object
+	 *
+	 * @return Array
+	 *
+	 * @details 
+	 * Strangely enough ObjectSetToArray takes a CMDBObjectSet, for instance of Attachments.
+	 * However on processing them, it turns into a DBObject?
+	 *
+	 */
+	public static function ObjectToArray(DBObject $oObject) {
+		
+		$oResult = new RestResultWithObjects();
+		$aShowFields = [];
+		$sClass = get_class($oObject);
+		
+		foreach(MetaModel::ListAttributeDefs($sClass) as $sAttCode => $oAttDef) {
+			$aShowFields[$sClass][] = $sAttCode;
+		}
+		
+		$oResult->AddObject(0, '', $oObject, $aShowFields);
+		
+		if(is_null($oResult->objects) == true) {
+			return [];
+		}
+		else {
+			
+			$sJSON = json_encode($oResult->objects);
+			
+			// Fix #1897 AttributeText (HTML): GetForJSON() -> GetEditValue() -> escaping of '&'
+			$sJSON = str_replace('&amp;', '&', $sJSON);
+			
+			return current(json_decode($sJSON, true));
+		}
+		
+	}
+	
+}
 
 /**
  * Interface iReportTool.
