@@ -282,7 +282,7 @@ abstract class DefaultReport implements iReport {
 }
 
 /**
- * Main class which can be used as a parent, so some properties are automatically inherited
+ * Class RTParent. Main class (report tool) which can be used as a parent, so some properties are automatically inherited
  */
 abstract class RTParent implements iReportTool {
 	
@@ -364,10 +364,10 @@ abstract class RTParent implements iReportTool {
 
 
 /**
- * Class ReportToolTwig. Renders a report wit hbasic object details using Twig.
+ * Class RTTwig. Renders a report with basic object details using Twig.
  */
 abstract class RTTwig extends RTParent implements iReportTool {
-	
+		
 	/**
 	 * @inheritDoc
 	 *
@@ -483,6 +483,8 @@ abstract class RTTwig extends RTParent implements iReportTool {
 			throw new ApplicationException('Template does not exist: '.$sReportFile);
 		}
 		
+		$sReportFile = str_replace(APPROOT.'env-'.utils::GetCurrentEnvironment().'/', '', $sReportFile);
+		
 		return $sReportFile;
 		
 	}
@@ -504,7 +506,9 @@ abstract class RTTwig extends RTParent implements iReportTool {
 		$sReportFile = self::GetReportFileName();
 		
 		// Twig Loader
-		$loader = new \Twig\Loader\FilesystemLoader(dirname($sReportFile));
+		// $loader = new \Twig\Loader\FilesystemLoader(dirname($sReportFile));
+		// Expose entire 'extensions' (env-xxx) directory so it's possible to include Twig templates
+		$loader = new \Twig\Loader\FilesystemLoader(APPROOT.'env-'.utils::GetCurrentEnvironment());
 		
 		// Twig environment options
 		$oTwigEnv = new \Twig\Environment($loader, [
@@ -548,16 +552,16 @@ abstract class RTTwig extends RTParent implements iReportTool {
 				
 		}
 		
-		return $oTwigEnv->render(basename($sReportFile), $aReportData);
+		return $oTwigEnv->render($sReportFile, $aReportData);
 		
 	}
 	
 }
 
 /**
- * Class ReportToolPDF. Parent class for iReportTool which creates PDF.
+ * Class RRTwigToPDF. Makes it possible to generate PDF files from Twig templates.
  */
-abstract class RTPDF extends RTTwig implements iReportTool {
+abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 	
 	/**
 	 * @inheritDoc
