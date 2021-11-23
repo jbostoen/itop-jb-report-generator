@@ -154,8 +154,6 @@ interface iReport {
 	 *
 	 * @return \String
 	 *
-	 * @details Hint: you can use Dict::S('...')
-	 *
 	 */
 	public static function GetTarget();
 	
@@ -230,8 +228,6 @@ abstract class DefaultReport implements iReport {
 	 * Gets the HTML target. Uusally '_blank' or '_self'
 	 *
 	 * @return \String
-	 *
-	 * @details Hint: you can use Dict::S('...')
 	 *
 	 */
 	public static function GetTarget() {
