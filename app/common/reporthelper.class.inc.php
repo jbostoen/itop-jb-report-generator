@@ -1,9 +1,9 @@
 <?php
 
 /**
- * @copyright   Copyright (C) 2019-2021 Jeffrey Bostoen
+ * @copyright   Copyright (c) 2019-2022 Jeffrey Bostoen
  * @license     https://www.gnu.org/licenses/gpl-3.0.en.html
- * @version     2020-04-09 16:58:14
+ * @version     2.7.220131
  *
  * Definition of class RTParent. Parent Report Tool (RT) to expand upon.
  */
