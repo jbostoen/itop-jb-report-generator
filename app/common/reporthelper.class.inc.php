@@ -26,6 +26,9 @@ use \NiceWebPage;
 use \RestResultWithObjects;
 use \utils;
 
+// Spatie BrowserShot
+use \Spatie\Browsershot\Browsershot;
+
 /**
  * Abstract class ReportGeneratorHelper. Helper functions.
  */
@@ -366,9 +369,6 @@ abstract class RTTwig extends RTParent implements iReportTool {
 		
 	/**
 	 * @inheritDoc
-	 *
-	 * @return \Boolean
-	 *
 	 */
 	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
 		
@@ -379,13 +379,11 @@ abstract class RTTwig extends RTParent implements iReportTool {
 	}
 	
 	/**
-	 * Rendering hook
-	 *
-	 * @param \Array $aReportData Report data
-	 * @param \CMDBObjectSet[] $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 *
+	 * @inheritDoc
 	 */
 	public static function EnrichData(&$aReportData, DBObjectSet $oSet_Objects) {
+		
+		// @todo This extension was created for iTop 2.7. In the meanwhile, some methods are exposed natively in iTop 3.0
 		
 		// Enrich data with iTop setting (remove trailing /)
 		$aReportData['itop']['root_url'] = substr(utils::GetAbsoluteUrlAppRoot(), 0, -1);
@@ -403,11 +401,7 @@ abstract class RTTwig extends RTParent implements iReportTool {
 	}
 	
 	/**
-	 * Action hook
-	 *
-	 * @param \Array $aReportData Report data
-	 * @param \DBObjectSet[] $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 *
+	 * @inheritDoc
 	 */
 	public static function DoExec($aReportData, DBObjectSet $oSet_Objects) {
 		
@@ -554,22 +548,25 @@ abstract class RTTwig extends RTParent implements iReportTool {
 	
 }
 
+
 /**
- * Class RRTwigToPDF. Makes it possible to generate PDF files from Twig templates.
+ * Class RTTwigToPDF. Generate PDF from Twig reports.
  */
 abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 	
 	/**
 	 * @inheritDoc
 	 *
+	 * @param \DBObjectSet[] $oSet_Objects CMDBObjectSet of iTop objects which are being processed
+	 * @param \String $sView View. 'details', 'list'
+	 * *
 	 * @return \Boolean
 	 *
 	 */
 	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
 		
-		// Generic, so no.
 		$sAction = utils::ReadParam('action', '', false, 'string');
-		return (in_array($sAction, ['download_pdf', 'show_pdf']) == true);
+		return (in_array($sAction, ['download_pdf', 'show_pdf', 'attach_pdf']) == true);
 		
 	}
 	
@@ -582,45 +579,61 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 	public static function DoExec($aReportData, DBObjectSet $oSet_Objects) {
 		
 		// If class doesn't exist, fail silently
-		if(class_exists('\mikehaertl\wkhtmlto\Pdf') == false) {
-			throw new ApplicationException('wkhtml seems not to be configured or installed properly.');
+		if(class_exists('\Spatie\Browsershot\Browsershot') == false) {
+			throw new ApplicationException('BrowserShot seems not to be configured or installed properly.');
 		}
 		
 		try {
-		
+			
 			/** @var \mikeheartl\wkhtmlto\Pdf $oPDF PDF Object */
-			$oPDF = self::GetPDFObject($aReportData);			
-			
-			// Simply output
-			
-
-			// It will be called downloaded.pdf and offered as a download with this header
-			// header("Content-Disposition:attachment;filename=downloaded.pdf");
-			/*
-				if(!$oPDF->saveAs('test.pdf')) {
-					echo $oPDF->getError();
-				}
-			*/
+			$sBase64 = self::GetPDFObject($aReportData);
+			$sPDF = base64_decode($sBase64);
 			
 			$sAction = utils::ReadParam('action', '', false, 'string');
+			
+			/** @var \DBObject $oObject iTop object */
+			$oObject = $oSet_Objects->Fetch();
 		
 			switch($sAction) {
 				case 'show_pdf':
-					header('Content-type:application/pdf');
+					header('Content-Type: application/pdf');
+					header('Content-Disposition:inline;filename='.date('Ymd_His').'_'.get_class($oObject).'_'.$oObject->GetKey().'.pdf');
+					echo $sPDF;
 					break;
 				
 				case 'download_pdf':
-					header('Content-type:application/pdf');
-					header("Content-Disposition:attachment;filename=downloaded.pdf");
+					header('Content-Type: application/pdf');
+					header('Content-Disposition:attachment;filename='.date('Ymd_His').'_'.get_class($oObject).'_'.$oObject->GetKey().'.pdf');
+					echo $sPDF;
 					break;
+					
+				case 'attach_pdf':
+				
+					$sObjClass = get_class($oObject);
+					$sObjKey = $oObject->GetKey();
+				
+					// Create attachment
+					$oAttachment = MetaModel::NewObject('Attachment', [
+						'user_id' => UserRights::GetUserId(),
+						'item_class' => $sObjClass,
+						'item_id' => $sObjKey,
+						'creation_date' => date('Y-m-d H:i:s'),
+						'contents' => new ormDocument($sPDF, 'application/pdf', date('Ymd_His').'_'.get_class($oObject).'_'.$oObject->GetKey().'.pdf')
+					]);
+					$oAttachment->DBInsert();
+					
+					// Go back
+					$oUrlMaker = new iTopStandardURLMaker();
+					$sUrl = $oUrlMaker->MakeObjectURL($sObjClass, $sObjKey);
+					header('Location: '.$sUrl);
+					exit();
+					break;
+					
 					
 				default:
 					// Unexpected
 			}
 			
-			if(!$oPDF->send()) {
-				echo $oPDF->getError();
-			}			
 				
 		}
 		catch(Exception $e) {
@@ -634,33 +647,59 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 	 *
 	 * @param \Array $aReportData Hashtable
 	 *
-	 * @return \mikehaertl\wkhtmlto\Pdf PDF Object
+	 * @return \String
 	 */
 	public static function GetPDFObject($aReportData) {
-		
-		// If class doesn't exist, fail silently
-		if(class_exists('\mikehaertl\wkhtmlto\Pdf') == false) {
-			throw new ApplicationException('mikehaertl/phpwkhtmltopdf library seems to be missing.');
-		}
 		
 		try {
 		
 			// Get HTML for this report
 			$sHTML = self::GetReportFromTwigTemplate($aReportData);
+				
+			// Example of inline image: https://127.0.0.1:8182/iTop/web/pages/ajax.document.php?operation=download_inlineimage&id=12&s=8fb03e"
+			// When using different environments (usually stored in $_SESSION but it can be called with switch_env), a more complete URL is needed.
+			$sNeedle = '/web/pages/ajax.document.php?operation=download_inlineimage';
+			$sHTML = str_replace($sNeedle, $sNeedle.'&switch_env='.utils::GetCurrentEnvironment(), $sHTML);
 			
-			// TCPPDF was expected to change in iTop 2.7; wkhtml offers more options.
-			// However, wkhtmltopdf (stable = 0.12.5) does NOT support flex (uses older webkit version) 
-			// Limited changes required: .row -> display: -webkit-box;
-			$oPDF = new \mikehaertl\wkhtmlto\Pdf();
+			$aBrowserShotSettings = utils::GetCurrentModuleSetting('browsershot', [
+				'node_binary' => 'node.exe', // Directory with node binary is in an environmental variable
+				'npm_binary' => 'npm.cmd', // Directory with NPM cmd file is in an environmental variable
+				'chrome_path' => 'C:/progra~1/Google/Chrome/Application/chrome.exe', // Directory with a Chrome browser executable
+				'ignore_https_errors' => false, // Set to "true" if using invalid or self signed certificates
+			]);
 			
-			// For cross instances, allow settings to be defined in config-itop.php
-			$aOptions = utils::GetCurrentModuleSetting('extra_wkhtml', []);
+			$oBrowsershot = new Browsershot();
 			
-			// Some options can also be set as: $oPDF->binary = 'C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe';
-			$oPDF->setOptions($aOptions);
-			$oPDF->addPage($sHTML);
+			$oBrowsershot
+				// ->setURL('https://google.be')
+				->setHTML($sHTML)
+				// ->setNodeModulePath('/C:/xampp/htdocs/puppeteer/node_modules/')
+				->setNodeBinary($aBrowserShotSettings['node_binary']) // Directory with node binary is in an environmental variable
+				->setNpmBinary($aBrowserShotSettings['npm_binary']) // Directory with NPM cmd file is in an environmental variable
+				->setChromePath($aBrowserShotSettings['chrome_path']) // Full path to the chrome.exe file (including executable name such as chrome.exe)
+				// ->userDataDir('C:/test')
+				->fullPage()
+				->format('A4')
+				->margins(0, 0, 0, 0)
+				->noSandbox() // Prevent E_CONNRESET error in %temp%\sf_proc_00.err (Windows/Xampp)
+				->showBackground() // Necessary to display backgrounds of elements
+				;
+				
+				// Till here it seems fine
+				// ->save('c:/tools/test4.pdf');
+				
+				// Tried these options for localhost images, but it's not working anyway:
+				// ->addChromiumArguments(['allow-insecure-localhost '])
+				// ->waitUntilNetworkIdle()
+				// ->setDelay(10)
+				
+				if($aBrowserShotSettings['ignore_https_errors'] == true) {
+					$oBrowsershot->ignoreHttpsErrors(); // Necessary on quickly configured local hosts with self signed certificates, otherwise linked scripts and stylesheets are ignored
+				}
+				
+			$sBase64 = $oBrowsershot->base64pdf();
 
-			return $oPDF;
+			return $sBase64;
 				
 		}
 		catch(Exception $e) {
@@ -668,5 +707,6 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 		}
 		
 	}
+	
 	
 }

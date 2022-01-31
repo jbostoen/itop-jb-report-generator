@@ -1,29 +1,7 @@
-# Documentation
-
-## How-to
-
-### ⚠ Setting up PDF generation
-
-This extension can use a wrapper to generate PDF documents.
-There's several PDF libraries available, each with their own benefits and limitations.
-Natively, this extension uses **mikehaertl/phpwkhtmltopdf** since it seemed to be most stable and easiest to use.
-TCPPDF was expected to change in iTop 2.7 and wkhtml offers more options.
-It's worth noting that it may not support more modern HTML/JS/CSS standards (such as flex).
-This is due to the fact that wkhtmltopdf (<= 0.12.5) uses an older webkit version.
-
-Default settings (for Windows) can be seen in **reporthelper.class.inc.php** -> ```RTPDF::GetPDFObject()```
-They can be overruled in the module settings for this extension, found in iTop configuration file.
-Edit the default settings found under **extras_wkhtml**.
-
-This extension has been tested with wkhtmltopdf 0.12.6.
-
-https://wkhtmltopdf.org/status.html
-
-This might change to Puppeteer at a more suitable point, but Puppeteer also had implementation issues.
-A candidate is https://github.com/rialto-php/puphpeteer ; however it requires PHP 7.4.
 
 
-### Adding reports
+# Adding reports
+
 * Create a separate extension.
 
 * For basic reports (HTML or PDF), add a file structure: templates/ClassName/details-or-list/filename.ext
@@ -51,7 +29,7 @@ use \Dict;
 abstract class ReportUserRequest_Details extends DefaultReport implements iReport {
 	
 	/**
-	 * @var \String $sModuleDir Name of current module dir
+	 * @var \String $sModuleDir Name of current module dir. If this report is introduced with a new extension named "jb-report-generator-example", then adjust it like that.
 	 */
 	public const sModuleDir = 'jb-report-generator-example';
 	
@@ -67,7 +45,7 @@ abstract class ReportUserRequest_Details extends DefaultReport implements iRepor
 	 *
 	 */
 	public static function GetTitle(DBObjectSet $oSet_Objects, $sView) {
-		return Dict::S('UI:Report:SomeDescription');
+		return Dict::S('UI:Report:ShowPDF');
 	}
 	
 	/**
@@ -82,9 +60,9 @@ abstract class ReportUserRequest_Details extends DefaultReport implements iRepor
 		return [
 			'type' => $sView,
 			'template' => 'ticket.html'
-			// Some actions which are supported by default (if no 'action' key is specified, it will just render a HTML template):
-			// 'action' => 'show_pdf',
-			// 'action' => 'download_pdf',
+			// Some actions which are supported by default (if no 'action' key is specified, it will just render a HTML template).
+			// They include show_pdf (renders in browser unless browser is configured to download the file), download_pdf, attach_pdf (adds as attachment to the iTop object)
+			'action' => 'show_pdf',
 		];
 	}
 	
@@ -105,9 +83,9 @@ abstract class ReportUserRequest_Details extends DefaultReport implements iRepor
 }
 ```
 
-### Variables in reports
+# Variables in reports
 
-#### Single item (details view)
+## Single item (details view)
 
 For details (single object), use the variable ```item```. It exposes ```key``` and ```fields``` (see iTop REST Documentation, it's similar). 
 Example: 
@@ -124,13 +102,15 @@ attachment.fields.contents.data
 attachment.fields.contents.filename
 ```
 
-#### Multiple items (list view)
+## Multiple items (list view)
 For lists (single or multiple objects), you can use ```item``` and create things like ```{% for item in items % } ... {% endfor %}```
 
 Attachments are also available for each item.
 
 
-#### Miscellaneous variables
+## Miscellaneous variables
+
+⚠️ iTop 3.0 has possibly introduced alternative variables and function calls for their Twig system. This has not been tested yet, but this report generator extension is also compatible with 2.7.
 
 Available in templates using the built-in Twig reporting:
 * ```itop.root_url```: iTop root URL
@@ -139,7 +119,10 @@ Available in templates using the built-in Twig reporting:
 * ```lib.jquery.js```: URL to JavaScript for jQuery
 
 
-### Using iTop language strings
+# Using iTop language strings
+
+⚠️ iTop 3.0 has possibly introduced alternative variables and function calls for their Twig system. This has not been tested yet, but this report generator extension is also compatible with 2.7.
+
 There's a Twig Filter named ```dict_s``` in templates.
 Where in iTop code this would be ```Dict::S('languagestring')```, 
 but it's the same as in iTop Portal templates.
@@ -151,11 +134,131 @@ Examples:
 ```
 
 
-### Using QR codes
+# Using QR codes
 See requirements!
 
 A Twig filter is available to convert text/URLs to QR-code.
 ```
 {{ 'this string will be converted'|qr }}
 ```
+
+
+# Setting up PDF settings for BrowserShot
+
+This extension can use a wrapper to generate PDF documents.
+There's several PDF libraries available, each with their own benefits and limitations.
+Natively, this extension uses **Spatie/BrowserShot** since it seemed to be stable and can handle modern web standards. At the moment, it's well maintained.  
+
+Default example settings are included for Windows systems.
+
+```
+'jb-report-generator' => array(
+	// Default settings
+	//
+	'settings' => array(
+		// Module specific settings go here, if any
+		// This is a demo configuration for a Windows system
+		'browsershot' => array(
+			'node_binary' => 'node.exe', // Directory with node binary is in an environmental variable
+			'npm_binary' => 'npm.cmd', // Directory with NPM cmd file is in an environmental variable
+			'chrome_path' => 'C:/progra~1/Google/Chrome/Application/chrome.exe', // Directory with a Chrome browser executable
+			
+		)
+	),
+);
+```
+
+
+## Install
+
+Install [Node.Js](https://nodejs.org/en/download/) on the web server.
+
+NPM (Node Package Manager) needed:
+* in directory of this extension: ```npm install puppeteer```
+
+Use **composer** to install **Spatie/BrowserShot**
+
+Don't forget to install Google Chrome.
+
+Check if the "PATH" variable n (Windows) System Environment Variables includes the paths where nodejs.exe and npm.cmd are located.
+
+### How to check node and npm installations
+
+Check the versions by running this on the command line:
+```
+node -v
+npm -v
+```
+
+Both commands should return version numbers when ran from a PHP script (mind the service/user account under which the web server is running).  
+
+Quick troubleshoot script:
+```
+<?php 
+
+	header('Content-Type: text/plain');
+	
+	echo 
+		'Whoami: '.exec('whoami').PHP_EOL.
+		'NPM: '.exec('npm -v').PHP_EOL.
+		'Node:'.exec('node -v').PHP_EOL.
+		'Chrome: '.exec('chrome -v');
+		
+```
+
+## Hints
+
+* Using HTML headers, you can build navigation in the PDF document
+* Install the fonts on your local system rather than relying on web fonts
+
+## Issues
+
+
+### No PDF, Errors during rendering
+
+These are personal notes I made while testing/debugging on Windows.
+
+Check if the "PATH" variable n (Windows) System Environment Variables includes the paths where nodejs.exe and npm.cmd are located.
+
+Sandbox mode is necessary for XAMPP x64 on Windows. 
+
+Still having issues?
+See if there's info in the error file (**%temp%\sf_proc_00.err**) (Symfony framework)
+
+
+Various errors may occur, including E_CONNRESET.
+It might also be wise to ignore https errors (self signed certificates) if CSS/JavaScript isn't loaded correctly.
+```
+[Error: ENOENT: no such file or directory, mkdtemp '\xampp\tmp\puppeteer_dev_chrome_profile-XXXXXX'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'mkdtemp',
+  path: '\\xampp\\tmp\\puppeteer_dev_chrome_profile-XXXXXX'
+}
+```
+
+For the above error: check whether the path is correct.  
+For instance, after moving an instance, the path may be different for the puppeteer_dev_chrome_profile-XXXXXX.  
+Check whether the path to Chrome is properly configured, for example `C:/progra~1/Google/Chrome/Application/chrome.exe`  
+
+Other recommended steps include removing **package-lock.json** and **node_modules** and running
+```
+npm install
+npm cache clean --force
+npm install -g npm
+npm audit fix
+npm install
+```
+
+
+```
+Error: Failed to launch the browser process! spawn C:/progra~1/Google/Chrome/Application/ ENOENT
+```
+Full Chrome path must be provided.
+
+### Images not loading
+
+* By default, HTTPS errors are ignored.
+* Images must be publicly accessible, as - for now - no authorization is included.
+* The URL must be correct. Special attention should go to a work around that is already included for iTop environments (switch_env parameter).
 

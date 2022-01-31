@@ -50,30 +50,12 @@ SetupWebPage::AddModule(
                 //
                 'settings' => array(
 					// Module specific settings go here, if any
-					// This is a demo configuration for a Windows system, usingn wkhtmltopdf 0.12
-					'extra_wkhtml' => array(
-						// On some systems you may have to set the path to the wkhtmltopdf executable
-						'binary' => 'C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe',
-						'ignoreWarnings' => false,
-						// 'tmpDir' => 'B:/temp',
-						'commandOptions' => array(
-							'useExec' => true, // Can help on Windows systems
-							'procEnv' => array(
-								// Check the output of 'locale -a' on your system to find supported languages
-								'LANG' => 'en_US.utf-8',
-							),
-						),
-						
-						// 'no-outline', // Make Chrome not complain
-						'margin-top'    => 10,
-						'margin-right'  => 10,
-						'margin-bottom' => 10,
-						'margin-left'   => 10,
-						
-						// HTTP credentials
-						// 'username' => 'user',
-						// 'password' => 'password',
-						
+					// This is a demo configuration for a Windows system
+					'browsershot' => array(
+						'node_binary' => 'node.exe', // Directory with node binary is in an environmental variable
+						'npm_binary' => 'npm.cmd', // Directory with NPM cmd file is in an environmental variable
+						'chrome_path' => 'C:/progra~1/Google/Chrome/Application/chrome.exe', // Path including a Chrome browser executable
+						'ignore_https_errors' => false, // Set to "true" if using invalid or self signed certificates
 					)
                 ),
         )

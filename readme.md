@@ -1,6 +1,6 @@
 # jb-report-generator
 
-Copyright (C) 2019-2021 Jeffrey Bostoen
+Copyright (C) 2019-2022 Jeffrey Bostoen
 
 [![License](https://img.shields.io/github/license/jbostoen/iTop-custom-extensions)](https://github.com/jbostoen/iTop-custom-extensions/blob/master/license.md)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/jbostoen)
@@ -11,15 +11,18 @@ Need custom development?
 Please get in touch to discuss the terms: **info@jeffreybostoen.be** / https://jeffreybostoen.be
 
 ## What?
-Feature: report generator. Quickly add reports to different classes (detail view and list view).
 
-⚠ Work in progress. Needs some tweaking to make it work in other environments!
-It's heavily focused on one project for now.
+Feature: report generator. Quickly add detailed reports to different classes (detail view and list view).  
+
+⚠ Work in progress. Needs some tweaking to make it work in other environments!  
+
 
 ## Requirements
 
-This extension uses some PHP packages.  
+This extension uses some PHP packages that are installed with composer.  
 Use composer to install and update all required packages (composer.json is included)
+
+Needs at least PHP 7.4
 
 
 **Required packages**:
@@ -33,10 +36,11 @@ Use composer to install and update all required packages (composer.json is inclu
 
 | package 	                 | version | comment                                                         |
 |--------------------------- |-------- | --------------------------------------------------------------  |
-| chillerlan/php-qrcode      | 3.4     | Optional. QR-code generation. Starting 4.0: requires PHP 7.4    |
-| mikehaertl/phpwkhtmltopdf  | 2.5.0   | Optional. For PDF reporting.                                    |
+| chillerlan/php-qrcode      | 4.3.2   | Optional. QR-code generation.                                   |
+| spatie/browsershot         | 3.52.3  | Optional. For PDF reporting.                                    |
+| nesk/puphpeteer            | 2.0.0   | Optional. For PDF reporting;                                    |
 | components/jquery          | 3.6.0   | Optional. For use of jQuery in templates.                       |
-| twbs/bootstrap             | 5.5.1   | Optional. For use of Twitter BootStrap in templates.            |
+| twbs/bootstrap             | 5.1.3   | Optional. For use of Twitter BootStrap in templates.            |
 
 
 

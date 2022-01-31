@@ -1,8 +1,9 @@
 {
     "require": {
         "twig/twig": "^3.3",
-        "chillerlan/php-qrcode": "3.4",
-        "mikehaertl/phpwkhtmltopdf": "^2.5",
+        "chillerlan/php-qrcode": "^4.0",
+        "nesk/puphpeteer": "^2.0",
+        "spatie/browsershot": "^3.50",
         "components/jquery": "^3.6",
         "twbs/bootstrap": "^5.1.1"
     }

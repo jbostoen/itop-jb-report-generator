@@ -48,7 +48,7 @@ use \utils;
 	require_once(APPROOT.'/application/wizardhelper.class.inc.php');
 	require_once(APPROOT.'/core/restservices.class.inc.php');
 	
-	// Autoloader (Twig, chillerlan\QRCode, ...
+	// Autoloader (Twig, chillerlan\QRCode, ...)
 	require_once('vendor/autoload.php');
 	
 	// Get iTop's Dict::S('string') so it can be exposed to Twig as well 
@@ -57,7 +57,7 @@ use \utils;
 	// require_once( APPROOT . '/core/dict.class.inc.php' );
 	
 	try {
-			
+		
 		// Logging in exposed :current_contact_id in OQL
 		if(LoginWebPage::EXIT_CODE_OK != LoginWebPage::DoLoginEx(null /* any portal */, false, LoginWebPage::EXIT_RETURN)) {
 			throw new SecurityException('You must be logged in');
@@ -97,14 +97,6 @@ use \utils;
 		// $aAllArgs = \MetaModel::PrepareQueryArguments($oFilter->GetInternalParams());
 		// $oFilter->ApplyParameters($aAllArgs); // Thought this was necessary for :current_contact_id. Guess not?
 		$oSet_Objects = new CMDBObjectSet($oFilter);		
-		
-		// Valid object(s)?
-		// 20200115-0849: This check seems pointless if there's more automation and a query returns no results
-		/*
-			if($oSet_Objects->Count() == 0) {
-				throw new \ApplicationException('Invalid OQL filter: no object(s) found');
-			}
-		*/
 		
 		$aSet_Objects = ReportGeneratorHelper::ObjectSetToArray($oSet_Objects);
 		
@@ -163,7 +155,7 @@ use \utils;
 		usort($aReportTools, function($a, $b) {
 			return $a::$iRank <=> $b::$iRank;
 		});
-		
+
 		// Execute each ReportExtension
 		foreach($aReportTools as $sClassName) {
 			$oSet_Objects->Rewind();
