@@ -24,7 +24,7 @@ use \DBObjectSet;
 use \Dict;
 
 /**
- * Class DefaultReport just represents a basic report to extend.
+ * Class ReportUserRequest_Details. Enables a "Show PDF" button in iTop's GUI.
  */
 abstract class ReportUserRequest_Details extends DefaultReport implements iReport {
 	
@@ -82,6 +82,18 @@ abstract class ReportUserRequest_Details extends DefaultReport implements iRepor
 	
 }
 ```
+
+## PHP classes: Report vs report tool
+
+In this implementation, a **report tool** is something which either **enriches the data** (this could be transforming, linking different data, ...) and/or **provides new actions**.  
+An example of a report tool is the PDF export option included in this extension.
+
+A **report** is used to add a menu action or button in the front end, typically based on a certain condition ("if viewing a list view of user requests, show this report option").  
+It typically defines the action (just showing the report, showing a PDF version, attaching the PDF to the object, ...) that will be performed.  
+
+The report tool and report do not require each other.
+
+
 
 # Variables in reports
 
@@ -210,6 +222,7 @@ Quick troubleshoot script:
 
 * Using HTML headers, you can build navigation in the PDF document
 * Install the fonts on your local system rather than relying on web fonts
+* It may be worth checking out Combodo's "iFrame dashlet" to embed reports
 
 ## Issues
 

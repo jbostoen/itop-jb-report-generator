@@ -10,6 +10,7 @@
 Dict::Add('EN US', 'English', 'English', array(
 	
 	// Introducing some common strings
+	'UI:Report:Show' => 'Show report',
 	'UI:Report:ShowPDF' => 'Show PDF',
 	'UI:Report:DownloadPDF' => 'Download PDF',
 	'UI:Report:AttachPDF' => 'Attach PDF',
