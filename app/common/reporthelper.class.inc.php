@@ -503,7 +503,8 @@ abstract class RTTwig extends RTParent implements iReportTool {
 		
 		// Twig environment options
 		$oTwigEnv = new \Twig\Environment($loader, [
-			'autoescape' => false
+			'autoescape' => false,
+			'cache' => false // No cache is default; but enforce!
 		]); 
 
 		// Combodo uses this filter, so let's use it the same way for our report generator
@@ -516,6 +517,11 @@ abstract class RTTwig extends RTParent implements iReportTool {
 		if(class_exists('chillerlan\QRCode\QRCode') == true) {
 			
 			$oTwigEnv->addFilter(new \Twig\TwigFilter('qr', function ($sString) {
+				
+					// Suppress empty attributes
+					if($sString == '') {
+						return '';
+					}
 
 					$aOptions = new \chillerlan\QRCode\QROptions([
 						'version'    => 5,
