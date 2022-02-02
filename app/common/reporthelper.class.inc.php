@@ -399,6 +399,9 @@ abstract class RTTwig extends RTParent implements iReportTool {
 		// CSS
 		$aReportData['lib']['bootstrap']['css'] = $sModuleUrl.'/vendor/twbs/bootstrap/dist/css/bootstrap.min.css';
 		
+		// Request
+		$aReportData['request'] = $_REQUEST;
+		
 	}
 	
 	/**
