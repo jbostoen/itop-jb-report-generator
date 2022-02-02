@@ -275,3 +275,8 @@ Full Chrome path must be provided.
 * Images must be publicly accessible, as - for now - no authorization is included.
 * The URL must be correct. Special attention should go to a work around that is already included for iTop environments (switch_env parameter).
 
+## Incorrect rendering in PDF
+
+For instance when displaying lots of data in a report and then rendering charts (Chart.js), the resulting PDF might have incorrect or even missing graphs.  
+Adapt the default PDF implementation to allow for some time to process everything.
+
