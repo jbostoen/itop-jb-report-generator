@@ -21,9 +21,12 @@ use \CMDBObjectSet;
 use \DBObject;
 use \DBObjectSet;
 use \Dict;
+use \iTopStandardURLMaker;
 use \MetaModel;
 use \NiceWebPage;
+use \ormDocument;
 use \RestResultWithObjects;
+use \UserRights;
 use \utils;
 
 // Spatie BrowserShot
