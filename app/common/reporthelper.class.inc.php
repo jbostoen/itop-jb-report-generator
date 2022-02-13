@@ -38,6 +38,21 @@ use \Spatie\Browsershot\Browsershot;
 abstract class ReportGeneratorHelper {
 
 	/**
+	 * Checks whether iTop is 2.7 (LTS) = true or 3.0 or higher = false.
+	 *
+	 * @return \Boolean
+	 */
+	public static function IsLegacy() {
+
+		if(defined('ITOP_VERSION') == true && version_compare(ITOP_VERSION, '3.0', '>=')) {
+			return false;
+		}	
+		
+		return true;
+		
+	}
+	
+	/**
 	 * Returns array (similar to REST/JSON) from object set
 	 *
 	 * @param \CMDBObjectSet $oObjectSet iTop object set
@@ -353,13 +368,23 @@ abstract class RTParent implements iReportTool {
 	 */
 	public static function OutputError(Exception $e) {
 		
-		require_once(APPROOT.'/application/nicewebpage.class.inc.php');
-		$oP = new NiceWebPage(\Dict::S('UI:PageTitle:FatalError'));
-		$oP->add("<h1>".Dict::S('UI:FatalErrorMessage')."</h1>\n");	
-		$oP->add(Dict::Format('UI:Error_Details', $e->getMessage()));	
-		$oP->output();
-		die();
-		
+		if(ReportGeneratorHelper::IsLegacy() == true) {
+			
+			require_once(APPROOT.'/application/nicewebpage.class.inc.php');
+			$oP = new NiceWebPage(Dict::S('UI:PageTitle:FatalError'));
+			$oP->add("<h1>".Dict::S('UI:FatalErrorMessage')."</h1>\n");	
+			$oP->add(Dict::Format('UI:Error_Details', $e->getMessage()));	
+			$oP->output();
+			die();
+			
+		}
+		else {
+			
+			// Leads to bad things in iTop 3.0
+			die($e->getMessage());
+			
+		}
+			
 	}
 	
 }
@@ -598,7 +623,7 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 		
 		try {
 			
-			/** @var \mikeheartl\wkhtmlto\Pdf $oPDF PDF Object */
+			/** @var \Spatie\Browsershot\Browsershot $oPDF PDF Object */
 			$sBase64 = self::GetPDFObject($aReportData);
 			$sPDF = base64_decode($sBase64);
 			
@@ -679,9 +704,13 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 				'npm_binary' => 'npm.cmd', // Directory with NPM cmd file is in an environmental variable
 				'chrome_path' => 'C:/progra~1/Google/Chrome/Application/chrome.exe', // Directory with a Chrome browser executable
 				'ignore_https_errors' => false, // Set to "true" if using invalid or self signed certificates
+				'bug_default' => '1'
 			]);
 			
 			$oBrowsershot = new Browsershot();
+			
+			$iTimeout = utils::ReadParam('timeout', 60, 'integer');
+			$sPageFormat = utils::ReadParam('page_format', 60, 'raw');
 			
 			$oBrowsershot
 				// ->setURL('https://google.be')
@@ -691,24 +720,31 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 				->setNpmBinary($aBrowserShotSettings['npm_binary']) // Directory with NPM cmd file is in an environmental variable
 				->setChromePath($aBrowserShotSettings['chrome_path']) // Full path to the chrome.exe file (including executable name such as chrome.exe)
 				// ->userDataDir('C:/test')
-				->fullPage()
-				->format('A4')
-				->margins(0, 0, 0, 0)
+				
 				->noSandbox() // Prevent E_CONNRESET error in %temp%\sf_proc_00.err (Windows/Xampp)
 				->showBackground() // Necessary to display backgrounds of elements
-				;
+				
+				->fullPage()
+				->format($sPageFormat)
+				->margins(0, 0, 0, 0)
 				
 				// Till here it seems fine
 				// ->save('c:/tools/test4.pdf');
 				
 				// Tried these options for localhost images, but it's not working anyway:
 				// ->addChromiumArguments(['allow-insecure-localhost '])
-				// ->waitUntilNetworkIdle()
-				// ->setDelay(10)
 				
-				if($aBrowserShotSettings['ignore_https_errors'] == true) {
-					$oBrowsershot->ignoreHttpsErrors(); // Necessary on quickly configured local hosts with self signed certificates, otherwise linked scripts and stylesheets are ignored
-				}
+				// ->waitUntilNetworkIdle()
+				// ->setDelay(10 * 1000) // In milliseconds
+				// ->waitForFunction('() => { window.chartsRendered >= 3 }', 1000, 660 * 1000) // function, polling, timeout.
+				->waitForFunction('if(typeof window.bPageFullyRendered === "undefined") { return true; } else { return window.bPageFullyRendered }', 1000, 90 * 1000) // function, polling, timeout. Mind that the timeout should be less than the default timeout (->timout(60))
+				->timeout($iTimeout) // seconds
+				
+			;
+			
+			if($aBrowserShotSettings['ignore_https_errors'] == true) {
+				$oBrowsershot->ignoreHttpsErrors(); // Necessary on quickly configured local hosts with self signed certificates, otherwise linked scripts and stylesheets are ignored
+			}
 				
 			$sBase64 = $oBrowsershot->base64pdf();
 

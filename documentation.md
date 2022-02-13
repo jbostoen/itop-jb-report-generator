@@ -180,6 +180,12 @@ Default example settings are included for Windows systems.
 );
 ```
 
+In the URL, you can specify some additional optional parameters:
+
+* page_format: A4
+* timeout: defaults to 60
+
+
 
 ## Install
 
