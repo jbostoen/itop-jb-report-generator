@@ -46,7 +46,7 @@ abstract class ReportGeneratorHelper {
 
 		if(defined('ITOP_VERSION') == true && version_compare(ITOP_VERSION, '3.0', '>=')) {
 			return false;
-		}	
+		}
 		
 		return true;
 		
@@ -710,7 +710,7 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 			$oBrowsershot = new Browsershot();
 			
 			$iTimeout = utils::ReadParam('timeout', 60, 'integer');
-			$sPageFormat = utils::ReadParam('page_format', 60, 'raw');
+			$sPageFormat = utils::ReadParam('page_format', 'A4', 'raw');
 			
 			$oBrowsershot
 				// ->setURL('https://google.be')
@@ -737,7 +737,9 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 				// ->waitUntilNetworkIdle()
 				// ->setDelay(10 * 1000) // In milliseconds
 				// ->waitForFunction('() => { window.chartsRendered >= 3 }', 1000, 660 * 1000) // function, polling, timeout.
-				->waitForFunction('if(typeof window.bPageFullyRendered === "undefined") { return true; } else { return window.bPageFullyRendered }', 1000, 90 * 1000) // function, polling, timeout. Mind that the timeout should be less than the default timeout (->timout(60))
+				
+				// Deliberately using double quotes here and inner quotes within
+				->waitForFunction("function() { if(typeof window.bPageFullyRendered === 'undefined') { return true; } else { return window.bPageFullyRendered } }", 1000, 90 * 1000) // function, polling, timeout. Mind that the timeout should be less than the default timeout (->timout(60))
 				->timeout($iTimeout) // seconds
 				
 			;
