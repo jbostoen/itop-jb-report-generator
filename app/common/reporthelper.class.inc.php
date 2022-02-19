@@ -739,7 +739,7 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 				// ->waitForFunction('() => { window.chartsRendered >= 3 }', 1000, 660 * 1000) // function, polling, timeout.
 				
 				// Deliberately using double quotes here and inner quotes within
-				->waitForFunction("function() { if(typeof window.bPageFullyRendered === 'undefined') { return true; } else { return window.bPageFullyRendered } }", 1000, 90 * 1000) // function, polling, timeout. Mind that the timeout should be less than the default timeout (->timout(60))
+				->waitForFunction("function() { if(typeof window.ReportComplete != 'function') { return true; } else { return window.ReportComplete() } }", 1000, ($iTimeout * 1000) -1) // function, polling, timeout. Mind that the timeout should be less than the default timeout
 				->timeout($iTimeout) // seconds
 				
 			;
