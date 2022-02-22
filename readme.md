@@ -56,3 +56,10 @@ PHP
 See [Documentation](documentation.md)
 
 
+## Sponsor features
+
+You can sponsor the development of these features:
+
+[ ] Periodic e-mail reports (daily, monthly, ...) based on a predefined OQL
+
+Feel free to suggest other ideas!
