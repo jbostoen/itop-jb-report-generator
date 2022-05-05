@@ -14,7 +14,7 @@ Please get in touch to discuss the terms: **info@jeffreybostoen.be** / https://j
 
 Feature: report generator. Quickly add detailed reports to different classes (detail view and list view).  
 
-⚠ Work in progress. Needs some tweaking to make it work in other environments!  
+⚠ Needs some tweaking to make it work in other environments! Unlikely to work on a typical web host unless you have more control over the server.
 
 
 ## Requirements
@@ -27,20 +27,22 @@ Needs at least PHP 7.4
 
 **Required packages**:
 
-| package 	                 | version | comment                                                         |
-|--------------------------- |-------- | --------------------------------------------------------------  |
-| twig/twig                  | 3.3     | Templates                                                       |
+For the version, see composer.json
+
+| Package 	                 | Comment                                                         |
+|--------------------------- | --------------------------------------------------------------  |
+| twig/twig                  | Templates                                                       |
 
 
 **Optional packages**:
 
-| package 	                 | version | comment                                                         |
-|--------------------------- |-------- | --------------------------------------------------------------  |
-| chillerlan/php-qrcode      | 4.3.2   | Optional. QR-code generation.                                   |
-| spatie/browsershot         | 3.52.3  | Optional. For PDF reporting.                                    |
-| nesk/puphpeteer            | 2.0.0   | Optional. For PDF reporting;                                    |
-| components/jquery          | 3.6.0   | Optional. For use of jQuery in templates.                       |
-| twbs/bootstrap             | 5.1.3   | Optional. For use of Twitter BootStrap in templates.            |
+| Package 	                 | Comment                                                         |
+|--------------------------- | --------------------------------------------------------------  |
+| chillerlan/php-qrcode      | Optional. QR-code generation.                                   |
+| spatie/browsershot         | Optional. For PDF reporting.                                    |
+| nesk/puphpeteer            | Optional. For PDF reporting.                                    |
+| components/jquery          | Optional. For use of jQuery in templates.                       |
+| twbs/bootstrap             | Optional. For use of Twitter BootStrap in templates.            |
 
 
 
@@ -55,11 +57,15 @@ PHP
 ## Documentation
 See [Documentation](documentation.md)
 
+## Professional support
+
+Get in touch to get this up and running and/or have custom made reports for your organization.
+
 
 ## Sponsor features
 
 You can sponsor the development of these features:
 
-[ ] Periodic e-mail reports (daily, monthly, ...) based on a predefined OQL
+- [ ] Periodic e-mail reports (daily, monthly, ...) based on a predefined OQL
 
 Feel free to suggest other ideas!
