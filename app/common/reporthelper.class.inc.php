@@ -63,7 +63,7 @@ abstract class ReportGeneratorHelper {
 		
 		$aResult = [];
 		while($oObject = $oObjectSet->Fetch()) {
-			$aResult[] = self::ObjectToArray($oObject);
+			$aResult[] = static::ObjectToArray($oObject);
 		}
 		
 		return $aResult;
@@ -439,8 +439,8 @@ abstract class RTTwig extends RTParent implements iReportTool {
 		
 		try {
 		
-			$sHTML = self::GetReportFromTwigTemplate($aReportData);
-			$sReportFile = self::GetReportFileName();
+			$sHTML = static::GetReportFromTwigTemplate($aReportData);
+			$sReportFile = static::GetReportFileName();
 			
 			// Set Content-Type header for these extensions
 			$aExtensionsToContentTypes = [
@@ -462,7 +462,7 @@ abstract class RTTwig extends RTParent implements iReportTool {
 		
 		}
 		catch(Exception $e) {
-			self::OutputError($e);
+			static::OutputError($e);
 		}
 		
 	}
@@ -525,7 +525,7 @@ abstract class RTTwig extends RTParent implements iReportTool {
 			throw new ApplicationException('The correct version of Twig does not seem to be configured or installed properly.');
 		}
 		
-		$sReportFile = self::GetReportFileName();
+		$sReportFile = static::GetReportFileName();
 		
 		// Twig Loader
 		// $loader = new \Twig\Loader\FilesystemLoader(dirname($sReportFile));
@@ -624,7 +624,7 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 		try {
 			
 			/** @var \Spatie\Browsershot\Browsershot $oPDF PDF Object */
-			$sBase64 = self::GetPDFObject($aReportData);
+			$sBase64 = static::GetPDFObject($aReportData);
 			$sPDF = base64_decode($sBase64);
 			
 			$sAction = utils::ReadParam('action', '', false, 'string');
@@ -675,7 +675,7 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 				
 		}
 		catch(Exception $e) {
-			self::OutputError($e);
+			static::OutputError($e);
 		}
 		
 	}
@@ -692,7 +692,7 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 		try {
 		
 			// Get HTML for this report
-			$sHTML = self::GetReportFromTwigTemplate($aReportData);
+			$sHTML = static::GetReportFromTwigTemplate($aReportData);
 				
 			// Example of inline image: https://127.0.0.1:8182/iTop/web/pages/ajax.document.php?operation=download_inlineimage&id=12&s=8fb03e"
 			// When using different environments (usually stored in $_SESSION but it can be called with switch_env), a more complete URL is needed.
@@ -754,7 +754,7 @@ abstract class RTTwigToPDF extends RTTwig implements iReportTool {
 				
 		}
 		catch(Exception $e) {
-			self::OutputError($e);
+			static::OutputError($e);
 		}
 		
 	}

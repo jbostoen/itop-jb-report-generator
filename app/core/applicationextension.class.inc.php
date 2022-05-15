@@ -44,18 +44,18 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 	 */
 	public static function EnumItems($iMenuId, $param) {
 	
-		if($iMenuId == self::MENU_OBJDETAILS_ACTIONS) {
+		if($iMenuId == static::MENU_OBJDETAILS_ACTIONS) {
 		  
 			/** @var \DBObject $oObject iTop object of which details are being displayed */
 			$oObject = $param;
 			
 			// Process templates
-			self::GetReports(DBObjectSet::FromObject($oObject), 'details');
+			static::GetReports(DBObjectSet::FromObject($oObject), 'details');
 			
-			return self::$menu_items;
+			return static::$menu_items;
 		
 		}
-		elseif($iMenuId == self::MENU_OBJLIST_ACTIONS) {
+		elseif($iMenuId == static::MENU_OBJLIST_ACTIONS) {
 			
 			/** @var \DBObjectSet $oObjectSet Set of iTop objects which are being displayed in a list */
 			$oObjectSet = $param;
@@ -64,9 +64,9 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 			if($oObjectSet->Count() > 0) {
 				
 				// Process templates
-				self::GetReports($oObjectSet, 'list');
+				static::GetReports($oObjectSet, 'list');
 				
-				return self::$menu_items;
+				return static::$menu_items;
 				  
 			} 
 		} 
@@ -90,8 +90,8 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 	public static function GetReports(DBObjectSet $oSet_Objects, $sView) {
 		
 		// Menu items
-		self::$menu_items = [];
-		self::$shortcut_actions = MetaModel::GetConfig()->Get('shortcut_actions');
+		static::$menu_items = [];
+		static::$shortcut_actions = MetaModel::GetConfig()->Get('shortcut_actions');
 		
 		// Process all policies
 		$aReports = [];
@@ -117,7 +117,7 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 				$sUID = utils::GetCurrentModuleName().'_'.preg_replace('/[^\dA-Za-z_-]/i', '', $sReport).'_'.rand(0, 10000);
 				
 				// Add shortcut (button) or keep menu item?
-				self::$shortcut_actions .= ($sReport::ForceButton() == true ? ','.$sUID : '');
+				static::$shortcut_actions .= ($sReport::ForceButton() == true ? ','.$sUID : '');
 				
 				// Parameters
 				$aParameters = [];
@@ -139,14 +139,14 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 					'&filter='.htmlentities($oSet_Objects->GetFilter()->Serialize(), ENT_QUOTES, 'UTF-8')
 				;
 					
-				self::$menu_items[] = new URLPopupMenuItem($sUID, $sReport::GetTitle($oSet_Objects, $sView), $sURL, $sReport::GetTarget());
+				static::$menu_items[] = new URLPopupMenuItem($sUID, $sReport::GetTitle($oSet_Objects, $sView), $sURL, $sReport::GetTarget());
 				
 			}
 			
 		}
 		
 		// Update shortcut_actions
-		MetaModel::GetConfig()->Set('shortcut_actions', ltrim(self::$shortcut_actions, ','));
+		MetaModel::GetConfig()->Set('shortcut_actions', ltrim(static::$shortcut_actions, ','));
 		 
 	}
 	 
