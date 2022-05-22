@@ -67,5 +67,7 @@ Get in touch to get this up and running and/or have custom made reports for your
 You can sponsor the development of these features:
 
 - [ ] Periodic e-mail reports (daily, monthly, ...) based on a predefined OQL
+- [ ] Show (HTML) reports in a dashlet (based on a predefined OQL per dashlet)
+- [ ] ...
 
 Feel free to suggest other ideas!
