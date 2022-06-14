@@ -5,7 +5,7 @@
  * @license     https://www.gnu.org/licenses/gpl-3.0.en.html
  * @version     2.7.220131
  *
- * Definition of class RTParent. Parent Report Tool (RT) to expand upon.
+ * Definition of class ReportProcessorParent. Parent Report Tool (ReportProcessor) to expand upon.
  */
 
 namespace jb_itop_extensions\report_generator;
@@ -112,10 +112,10 @@ abstract class ReportGeneratorHelper {
 }
 
 /**
- * Interface iReportTool.
- * Implement this interface to enrich data or perform other actions, for example generating a PDF.
+ * Interface iReportProcessor.
+ * Implement this interface to enrich data or perform other actions, e.g. to show a HTML report or generate a PDF file.
  */
-interface iReportTool {
+interface iReportProcessor {
 	
 	/**
 	 * Whether or not this extension is applicable
@@ -149,10 +149,10 @@ interface iReportTool {
 }
 
 /**
- * Interface iReport.
- * Implement this interface to hook into the UI of iTop's console (backend).
+ * Interface iReportUIElement.
+ * Implement this interface to hook into the UI of iTop's console (backend) to show a button or add a menu action.
  */
-interface iReport {
+interface iReportUIElement {
 	
 	/**
 	 * If a button should be shown instead of a menu item
@@ -216,9 +216,9 @@ interface iReport {
 }
 
 /**
- * Class DefaultReport just represents a basic report to extend.
+ * Class AbstractReportUIElement. Extend this class (and make it applicable) to add actions (buttons or menus) in iTop.
  */
-abstract class DefaultReport implements iReport {
+abstract class AbstractReportUIElement implements iReportUIElement {
 	
 	/**
 	 * @var \String $sModuleName Name of the module where this is defined
@@ -271,7 +271,7 @@ abstract class DefaultReport implements iReport {
 	}
 	
 	/**
-	 * URL Parameters. Often 'template' or additional parameters for extended iReportTool implementations.
+	 * URL Parameters. Often 'template' or additional parameters for extended iReportProcessor implementations.
 	 *
 	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
 	 * @param \String $sView View: 'details' or 'list'
@@ -299,9 +299,9 @@ abstract class DefaultReport implements iReport {
 }
 
 /**
- * Class RTParent. Main class (report tool) which can be used as a parent, so some properties are automatically inherited
+ * Class ReportProcessorParent. Main class (report tool) which can be used as a parent, so some properties are automatically inherited.
  */
-abstract class RTParent implements iReportTool {
+abstract class ReportProcessorParent implements iReportProcessor {
 	
 	/**
 	 * @var \Integer $iRank Rank. Lower number = goes first.
@@ -391,9 +391,9 @@ abstract class RTParent implements iReportTool {
 
 
 /**
- * Class RTTwig. Renders a report with basic object details using Twig.
+ * Class ReportProcessorTwig. Renders a report with basic object details using Twig.
  */
-abstract class RTTwig extends RTParent implements iReportTool {
+abstract class ReportProcessorTwig extends ReportProcessorParent {
 		
 	/**
 	 * @inheritDoc
@@ -588,9 +588,9 @@ abstract class RTTwig extends RTParent implements iReportTool {
 
 
 /**
- * Class RTTwigToPDF. Generate PDF from Twig reports.
+ * Class ReportProcessorTwigToPDF. Generate PDF from Twig reports.
  */
-abstract class RTTwigToPDF extends RTTwig implements iReportTool {
+abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 	
 	/**
 	 * @inheritDoc

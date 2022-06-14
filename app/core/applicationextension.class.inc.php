@@ -97,7 +97,7 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 		$aReports = [];
 		foreach(get_declared_classes() as $sClassName) {
 		
-			if(in_array('jb_itop_extensions\report_generator\iReport', class_implements($sClassName))) {
+			if(in_array('jb_itop_extensions\report_generator\iReportUIElement', class_implements($sClassName))) {
 				$aReports[] = $sClassName;
 			}
 			

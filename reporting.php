@@ -134,10 +134,10 @@ use \utils;
 		$aReportData['request'] = $_REQUEST;
 		$aReportData['application']['url'] = utils::GetDefaultUrlAppRoot();
 		
-		// Get all classes implementing iReportTool
+		// Get all classes implementing iReportProcessor
 		$aReportTools = [];
 		foreach(get_declared_classes() as $sClassName) {
-			if(in_array('jb_itop_extensions\report_generator\iReportTool', class_implements($sClassName))) {
+			if(in_array('jb_itop_extensions\report_generator\iReportProcessor', class_implements($sClassName))) {
 				$aReportTools[] = $sClassName;
 			}
 		}

@@ -7,7 +7,7 @@
 * For basic reports (HTML or PDF), add a file structure: templates/ClassName/details-or-list/filename.ext
   * Example: templates/UserRequest/details/ticket.html
   
-* Create a PHP file which is loaded through the extension: extend the abstract class ```DefaultReport``` and implement the interface ```iReport```.
+* Create a PHP file which is loaded through the extension: extend the abstract class ```AbstractReportUIElement``` which implements the interface ```iReportUIElement```.
   * Set a condition
   
   
@@ -24,9 +24,9 @@ use \DBObjectSet;
 use \Dict;
 
 /**
- * Class ReportUserRequest_Details. Enables a "Show PDF" button in iTop's GUI.
+ * Class ReportUIElement_UserRequest_Details. Enables a "Show PDF" button in iTop's GUI.
  */
-abstract class ReportUserRequest_Details extends DefaultReport implements iReport {
+abstract class ReportUIElement_UserRequest_Details extends AbstractReportUIElement {
 	
 	/**
 	 * @var \String $sModuleDir Name of current module dir. If this report is introduced with a new extension named "jb-report-generator-example", then adjust it like that.
@@ -45,11 +45,13 @@ abstract class ReportUserRequest_Details extends DefaultReport implements iRepor
 	 *
 	 */
 	public static function GetTitle(DBObjectSet $oSet_Objects, $sView) {
+	
 		return Dict::S('UI:Report:ShowPDF');
+		
 	}
 	
 	/**
-	 * URL Parameters. Often 'template' or additional parameters for extended iReportTool implementations.
+	 * URL Parameters. Often 'template' or additional parameters for extended iReportProcessor implementations.
 	 *
 	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
 	 * @param \String $sView View: 'details' or 'list'
@@ -57,6 +59,7 @@ abstract class ReportUserRequest_Details extends DefaultReport implements iRepor
 	 * @return \Array
 	 */
 	public static function GetURLParameters(DBObjectSet $oSet_Objects, $sView) {
+	
 		return [
 			'type' => $sView,
 			'template' => 'ticket.html'
@@ -64,11 +67,12 @@ abstract class ReportUserRequest_Details extends DefaultReport implements iRepor
 			// They include show_pdf (renders in browser unless browser is configured to download the file), download_pdf, attach_pdf (adds as attachment to the iTop object)
 			'action' => 'show_pdf',
 		];
+		
 	}
 	
 	
 	/**
-	 * Whether or not this extension is applicable
+	 * Whether or not this UI element is applicable
 	 *
 	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
 	 * @param \String $sView View: 'details' or 'list'
@@ -77,7 +81,9 @@ abstract class ReportUserRequest_Details extends DefaultReport implements iRepor
 	 *
 	 */
 	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
+	
 		return ($sView == 'details' && $oSet_Objects->GetClass() == 'UserRequest');
+		
 	}
 	
 }
@@ -85,13 +91,13 @@ abstract class ReportUserRequest_Details extends DefaultReport implements iRepor
 
 ## PHP classes: Report vs report tool
 
-In this implementation, a **report tool** is something which either **enriches the data** (this could be transforming, linking different data, ...) and/or **provides new actions**.  
+In this implementation, a **report processor** is something which either **enriches the data** (this could be transforming, linking different data, ...) and/or **provides new actions**.  
 An example of a report tool is the PDF export option included in this extension.
 
-A **report** is used to add a menu action or button in the front end, typically based on a certain condition ("if viewing a list view of user requests, show this report option").  
-It typically defines the action (just showing the report, showing a PDF version, attaching the PDF to the object, ...) that will be performed.  
+A **report UI element** is used to add a menu action or button in the front end, typically based on a certain condition (e.g. "if a list view of user requests is displayed, show this report option").  
+It typically defines the action (just showing the report, showing a PDF version, attaching the PDF to the object, ...) that will be performed by one or more processors.  
 
-The report tool and report do not require each other.
+The report processor and UI element do not require each other.
 
 
 

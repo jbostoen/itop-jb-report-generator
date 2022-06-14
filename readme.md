@@ -14,7 +14,7 @@ Please get in touch to discuss the terms: **info@jeffreybostoen.be** / https://j
 
 Feature: report generator. Quickly add detailed reports to different classes (detail view and list view).  
 
-⚠ Needs some tweaking to make it work in other environments! Unlikely to work on a typical web host unless you have more control over the server.
+⚠ Needs some tweaking to make it work in other environments! The PDF export is unliktely to work on a typical web host unless you have more control over the server as it depends on Puppeteer.
 
 
 ## Requirements
@@ -55,6 +55,7 @@ PHP
 
 
 ## Documentation
+
 See [Documentation](documentation.md)
 
 ## Professional support
@@ -71,3 +72,19 @@ You can sponsor the development of these features:
 - [ ] ...
 
 Feel free to suggest other ideas!
+
+## Upgrading
+
+### From before 2022-06-14
+
+Some renaming was done to make things more clear:
+
+| Before                  | After                        |
+| ----------------------- | ---------------------------- |
+| iReport                 | iReportUIElement             |
+| DefaultReport           | AbstractReportUIElement      |
+| iReportTool             | iReportProcessor             |
+| RTParent                | ReportProcessorParent        |
+| RTTwig                  | ReportProcessorTwig          |
+| RTTwigToPDF             | ReportProcessorTwigToPDF     |
+
