@@ -171,18 +171,16 @@ Default example settings are included for Windows systems.
 
 ```
 'jb-report-generator' => array(
-	// Default settings
-	//
-	'settings' => array(
-		// Module specific settings go here, if any
-		// This is a demo configuration for a Windows system
-		'browsershot' => array(
-			'node_binary' => 'node.exe', // Directory with node binary is in an environmental variable
-			'npm_binary' => 'npm.cmd', // Directory with NPM cmd file is in an environmental variable
-			'chrome_path' => 'C:/progra~1/Google/Chrome/Application/chrome.exe', // Directory with a Chrome browser executable
-			
-		)
+	
+	// Module specific settings go here, if any
+	// This is a demo configuration for a Windows system
+	'browsershot' => array(
+		'node_binary' => 'node.exe', // Directory with node binary is in an environmental variable
+		'npm_binary' => 'npm.cmd', // Directory with NPM cmd file is in an environmental variable
+		'chrome_path' => 'C:/progra~1/Google/Chrome/Application/chrome.exe', // Directory with a Chrome browser executable
+		
 	),
+	
 );
 ```
 
@@ -191,6 +189,39 @@ In the URL, you can specify some additional optional parameters:
 * page_format: A4
 * timeout: defaults to 60
 
+
+# Setting up external PDF renderer
+
+The latest releases contain an experimental implementation  so you can use an external PDF renderer.  
+Use case: basic webhosts often don't allow the necessary steps to set everything up correctly for BrowserShot/Puppeteer.
+
+```
+'jb-report-generator' => array(
+	
+	'mode' => 'external', // Defaults to 'browsershot'
+	'pdf_external_renderer' => array(
+		'url' => 'https://some-host.org/pdfproxy.php',
+		'skip_certificate_check' => false, // Set to true to allow invalid or self-signed certificates
+	),
+	
+);
+```
+
+As for the external PDF renderer:
+A JSON payload is posted:  
+```
+{
+ 'data': 'Some HTML'
+}
+```
+
+A JSON response is expected:  
+```
+{
+ 'error' => 0, // Could be a higher number + 'message' if there is an error
+ 'pdf' => '...', // Base64 encoded PDF
+}
+```
 
 
 ## Install

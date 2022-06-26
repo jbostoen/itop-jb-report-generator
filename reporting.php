@@ -26,15 +26,11 @@
 namespace jb_itop_extensions\report_generator;
 
 use \ApplicationException;
-use \DBObject;
-use \CMDBObjectSet;
-use \DBObjectSearch;
 use \Dict;
 use \LoginWebPage;
 // use \MetaModel;
 use \NiceWebPage;
 use \SecurityException;
-use \UserRights;
 use \utils;
 
 
@@ -76,10 +72,6 @@ use \utils;
 		// --
 		
 		// Check if right parameters have been given
-		if(empty($sClassName) == true) {
-			throw new ApplicationException(Dict::Format('UI:Error:1ParametersMissing', 'class'));
-		}
-		
 		if(empty($sFilter) == true) {
 			throw new ApplicationException(Dict::Format('UI:Error:1ParametersMissing', 'filter'));
 		}
@@ -93,76 +85,8 @@ use \utils;
 			throw new ApplicationException('Valid values for view are: details, list');
 		}
 		
-		$oFilter = DBObjectSearch::unserialize($sFilter);
-		// $aAllArgs = \MetaModel::PrepareQueryArguments($oFilter->GetInternalParams());
-		// $oFilter->ApplyParameters($aAllArgs); // Thought this was necessary for :current_contact_id. Guess not?
-		$oSet_Objects = new CMDBObjectSet($oFilter);		
+		ReportGeneratorHelper::DoExec($sFilter, $sView);
 		
-		$aSet_Objects = ReportGeneratorHelper::ObjectSetToArray($oSet_Objects);
-		
-		// Get keys to build one OQL Query
-		$aKeys = [ -1];
-		foreach($aSet_Objects as $aObject) {
-			$aKeys[] = $aObject['key'];
-		}
-		
-		$oFilter_Attachments = new DBObjectSearch('Attachment');
-		$oFilter_Attachments->AddCondition('item_id', $aKeys, 'IN');
-		$oFilter_Attachments->AddCondition('item_class', $sClassName);
-		$oSet_Attachments = new CMDBObjectSet($oFilter_Attachments);
-		$aSet_Attachments = ReportGeneratorHelper::ObjectSetToArray($oSet_Attachments);
-		
-		foreach($aSet_Objects as &$aObject) {
-			
-			$aObject['attachments'] = array_filter($aSet_Attachments, function($aAttachment) use ($aObject) {
-				return ($aAttachment['fields']['item_id'] = $aObject['key']);
-			});
-			
-			$aObject['attachments'] = array_values($aObject['attachments']);
-			
-		}
-		
-		if($sView == 'details') {
-			$aReportData['item'] = array_values($aSet_Objects)[0];
-		}
-		else {
-			$aReportData['items'] = $aSet_Objects;
-		}
-		
-		// Expose some variables so they can be used in reports
-		$aReportData['current_contact'] = ReportGeneratorHelper::ObjectToArray(UserRights::GetUserObject());
-		$aReportData['request'] = $_REQUEST;
-		$aReportData['application']['url'] = utils::GetDefaultUrlAppRoot();
-		
-		// Get all classes implementing iReportProcessor
-		$aReportTools = [];
-		foreach(get_declared_classes() as $sClassName) {
-			if(in_array('jb_itop_extensions\report_generator\iReportProcessor', class_implements($sClassName))) {
-				$aReportTools[] = $sClassName;
-			}
-		}
-		
-		// Enrich first
-		foreach($aReportTools as $sClassName) {
-			$oSet_Objects->Rewind();
-			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
-				$sClassName::EnrichData($aReportData, $oSet_Objects);
-			}
-		}
-		
-		// Sort based on 'rank' of each class
-		// Use case: block further processing
-		usort($aReportTools, function($a, $b) {
-			return $a::$iRank <=> $b::$iRank;
-		});
-
-		// Execute each ReportExtension
-		foreach($aReportTools as $sClassName) {
-			$oSet_Objects->Rewind();
-			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
-				$sClassName::DoExec($aReportData, $oSet_Objects);
-			}
-		}
 
 	}
 	catch(Exception $e) {

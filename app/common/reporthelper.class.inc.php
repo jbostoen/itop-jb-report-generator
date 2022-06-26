@@ -19,6 +19,7 @@ use \ReflectionClass;
 use \ApplicationException;
 use \CMDBObjectSet;
 use \DBObject;
+use \DBObjectSearch;
 use \DBObjectSet;
 use \Dict;
 use \iTopStandardURLMaker;
@@ -105,6 +106,93 @@ abstract class ReportGeneratorHelper {
 			$sJSON = str_replace('&amp;', '&', $sJSON);
 			
 			return current(json_decode($sJSON, true));
+		}
+		
+	}
+	
+	/**
+	 * Executes the reporting.
+	 *
+	 * @param \String $sFilter OQL filter
+	 * @param \String $sView Current view where the method was triggered from: 'list', 'details'
+	 *
+	 * @return void
+	 */
+	public static function DoExec($sFilter, $sView) {
+	
+		$oFilter = DBObjectSearch::unserialize($sFilter);
+		// $aAllArgs = \MetaModel::PrepareQueryArguments($oFilter->GetInternalParams());
+		// $oFilter->ApplyParameters($aAllArgs); // Thought this was necessary for :current_contact_id. Guess not?
+		$oSet_Objects = new CMDBObjectSet($oFilter);		
+		
+		$sClassName = $oFilter->GetClass();
+		
+		$aSet_Objects = static::ObjectSetToArray($oSet_Objects);
+		
+		
+		// Get keys to build one OQL Query
+		$aKeys = [ -1];
+		foreach($aSet_Objects as $aObject) {
+			$aKeys[] = $aObject['key'];
+		}
+		
+		// Retrieve attachments
+		$oFilter_Attachments = new DBObjectSearch('Attachment');
+		$oFilter_Attachments->AddCondition('item_id', $aKeys, 'IN');
+		$oFilter_Attachments->AddCondition('item_class', $sClassName);
+		$oSet_Attachments = new CMDBObjectSet($oFilter_Attachments);
+		$aSet_Attachments = static::ObjectSetToArray($oSet_Attachments);
+		
+		foreach($aSet_Objects as &$aObject) {
+			
+			$aObject['attachments'] = array_filter($aSet_Attachments, function($aAttachment) use ($aObject) {
+				return ($aAttachment['fields']['item_id'] = $aObject['key']);
+			});
+			
+			$aObject['attachments'] = array_values($aObject['attachments']);
+			
+		}
+		
+		if($sView == 'details') {
+			$aReportData['item'] = array_values($aSet_Objects)[0];
+		}
+		else {
+			$aReportData['items'] = $aSet_Objects;
+		}
+		
+		// Expose some variables so they can be used in reports
+		$aReportData['current_contact'] = static::ObjectToArray(UserRights::GetUserObject());
+		$aReportData['request'] = $_REQUEST;
+		$aReportData['application']['url'] = utils::GetDefaultUrlAppRoot();
+		
+		// Get all classes implementing iReportProcessor
+		$aReportProcessors = [];
+		foreach(get_declared_classes() as $sClassName) {
+			if(in_array('jb_itop_extensions\report_generator\iReportProcessor', class_implements($sClassName))) {
+				$aReportProcessors[] = $sClassName;
+			}
+		}
+		
+		// Enrich first
+		foreach($aReportProcessors as $sClassName) {
+			$oSet_Objects->Rewind();
+			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
+				$sClassName::EnrichData($aReportData, $oSet_Objects);
+			}
+		}
+		
+		// Sort based on 'rank' of each class
+		// Use case: block further processing
+		usort($aReportProcessors, function($a, $b) {
+			return $a::$iRank <=> $b::$iRank;
+		});
+
+		// Execute each ReportProcessor
+		foreach($aReportProcessors as $sClassName) {
+			$oSet_Objects->Rewind();
+			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
+				$sClassName::DoExec($aReportData, $oSet_Objects);
+			}
 		}
 		
 	}
@@ -575,12 +663,19 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		else {
 			
 			$oTwigEnv->addFilter(new \Twig\TwigFilter('qr', function ($sString) {
-				return $sString.' (QR library missing)';
+				return $sString.' (PHP Library chillerlan\QRCode\QRCode missing)';
 			}));
 				
 		}
 		
-		return $oTwigEnv->render($sReportFile, $aReportData);
+		$sHTML = $oTwigEnv->render($sReportFile, $aReportData);
+		
+		// When using different environments (usually stored in $_SESSION but it can be called with switch_env), a more complete URL is needed for some renderers (e.g. ReportProcessorTwigToPDF)
+		// Example of inline image: https://127.0.0.1:8182/iTop/web/pages/ajax.document.php?operation=download_inlineimage&id=12&s=8fb03e"
+		$sNeedle = '/web/pages/ajax.document.php?operation=download_inlineimage';
+		$sHTML = str_replace($sNeedle, $sNeedle.'&switch_env='.utils::GetCurrentEnvironment(), $sHTML);
+		
+		return $sHTML;
 		
 	}
 	
@@ -615,11 +710,6 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 	 *
 	 */
 	public static function DoExec($aReportData, DBObjectSet $oSet_Objects) {
-		
-		// If class doesn't exist, fail silently
-		if(class_exists('\Spatie\Browsershot\Browsershot') == false) {
-			throw new ApplicationException('BrowserShot seems not to be configured or installed properly.');
-		}
 		
 		try {
 			
@@ -689,72 +779,153 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 	 */
 	public static function GetPDFObject($aReportData) {
 		
-		try {
+		$sMode = utils::GetCurrentModuleSetting('pdf_renderer', 'browsershot');
 		
-			// Get HTML for this report
-			$sHTML = static::GetReportFromTwigTemplate($aReportData);
-				
-			// Example of inline image: https://127.0.0.1:8182/iTop/web/pages/ajax.document.php?operation=download_inlineimage&id=12&s=8fb03e"
-			// When using different environments (usually stored in $_SESSION but it can be called with switch_env), a more complete URL is needed.
-			$sNeedle = '/web/pages/ajax.document.php?operation=download_inlineimage';
-			$sHTML = str_replace($sNeedle, $sNeedle.'&switch_env='.utils::GetCurrentEnvironment(), $sHTML);
+		if($sMode == 'browsershot') {
 			
-			$aBrowserShotSettings = utils::GetCurrentModuleSetting('browsershot', [
-				'node_binary' => 'node.exe', // Directory with node binary is in an environmental variable
-				'npm_binary' => 'npm.cmd', // Directory with NPM cmd file is in an environmental variable
-				'chrome_path' => 'C:/progra~1/Google/Chrome/Application/chrome.exe', // Directory with a Chrome browser executable
-				'ignore_https_errors' => false, // Set to "true" if using invalid or self signed certificates
-				'bug_default' => '1'
-			]);
+			try {		
+				
+				// This default implementation now relies on Spatie's BrowserShot.
+				//It doesn't rely on tcpdf and also no longer on MikeHeartl's WkHtmlToPdf since they still didn't support a lot of modern web standards, e.g. the Twitter BootStrap package.
+				
+				// If class doesn't exist, this should fail
+				if(class_exists('\Spatie\Browsershot\Browsershot') == false) {
+					throw new ApplicationException('PHP Library \Spatie\BrowserShot\BrowserShot seems not to be configured or installed properly.');
+				}
 			
-			$oBrowsershot = new Browsershot();
-			
-			$iTimeout = utils::ReadParam('timeout', 60, 'integer');
-			$sPageFormat = utils::ReadParam('page_format', 'A4', 'raw');
-			
-			$oBrowsershot
-				// ->setURL('https://google.be')
-				->setHTML($sHTML)
-				// ->setNodeModulePath('/C:/xampp/htdocs/puppeteer/node_modules/')
-				->setNodeBinary($aBrowserShotSettings['node_binary']) // Directory with node binary is in an environmental variable
-				->setNpmBinary($aBrowserShotSettings['npm_binary']) // Directory with NPM cmd file is in an environmental variable
-				->setChromePath($aBrowserShotSettings['chrome_path']) // Full path to the chrome.exe file (including executable name such as chrome.exe)
-				// ->userDataDir('C:/test')
+				// Get HTML for this report
+				$sHTML = static::GetReportFromTwigTemplate($aReportData);
 				
-				->noSandbox() // Prevent E_CONNRESET error in %temp%\sf_proc_00.err (Windows/Xampp)
-				->showBackground() // Necessary to display backgrounds of elements
+				$aBrowserShotSettings = utils::GetCurrentModuleSetting('browsershot', [
+					'node_binary' => 'node.exe', // Directory with node binary is in an environmental variable
+					'npm_binary' => 'npm.cmd', // Directory with NPM cmd file is in an environmental variable
+					'chrome_path' => 'C:/progra~1/Google/Chrome/Application/chrome.exe', // Directory with a Chrome browser executable
+					'ignore_https_errors' => false, // Set to "true" if using invalid or self signed certificates
+				]);
 				
-				->fullPage()
-				->format($sPageFormat)
-				->margins(0, 0, 0, 0)
+				$oBrowsershot = new Browsershot();
 				
-				// Till here it seems fine
-				// ->save('c:/tools/test4.pdf');
+				$iTimeout = utils::ReadParam('timeout', 60, 'integer');
+				$sPageFormat = utils::ReadParam('page_format', 'A4', 'raw');
 				
-				// Tried these options for localhost images, but it's not working anyway:
-				// ->addChromiumArguments(['allow-insecure-localhost '])
+				$oBrowsershot
+					// ->setURL('https://google.be')
+					->setHTML($sHTML)
+					// ->setNodeModulePath('/C:/xampp/htdocs/puppeteer/node_modules/')
+					->setNodeBinary($aBrowserShotSettings['node_binary']) // Directory with node binary is in an environmental variable
+					->setNpmBinary($aBrowserShotSettings['npm_binary']) // Directory with NPM cmd file is in an environmental variable
+					->setChromePath($aBrowserShotSettings['chrome_path']) // Full path to the chrome.exe file (including executable name such as chrome.exe)
+					// ->userDataDir('C:/test')
+					
+					->noSandbox() // Prevent E_CONNRESET error in %temp%\sf_proc_00.err (Windows/Xampp)
+					->showBackground() // Necessary to display backgrounds of elements
+					
+					->fullPage()
+					->format($sPageFormat)
+					->margins(0, 0, 0, 0)
+					
+					// Till here it seems fine
+					// ->save('c:/tools/test4.pdf');
+					
+					// Tried these options for localhost images, but it's not working anyway:
+					// ->addChromiumArguments(['allow-insecure-localhost '])
+					
+					// ->waitUntilNetworkIdle()
+					// ->setDelay(10 * 1000) // In milliseconds
+					// ->waitForFunction('() => { window.chartsRendered >= 3 }', 1000, 660 * 1000) // function, polling, timeout.
+					
+					// Deliberately using double quotes here and inner quotes within
+					->waitForFunction("function() { if(typeof window.ReportComplete != 'function') { return true; } else { return window.ReportComplete() } }", 1000, ($iTimeout * 1000) -1) // function, polling, timeout. Mind that the timeout should be less than the default timeout
+					->timeout($iTimeout) // seconds
+					
+				;
 				
-				// ->waitUntilNetworkIdle()
-				// ->setDelay(10 * 1000) // In milliseconds
-				// ->waitForFunction('() => { window.chartsRendered >= 3 }', 1000, 660 * 1000) // function, polling, timeout.
-				
-				// Deliberately using double quotes here and inner quotes within
-				->waitForFunction("function() { if(typeof window.ReportComplete != 'function') { return true; } else { return window.ReportComplete() } }", 1000, ($iTimeout * 1000) -1) // function, polling, timeout. Mind that the timeout should be less than the default timeout
-				->timeout($iTimeout) // seconds
-				
-			;
-			
-			if($aBrowserShotSettings['ignore_https_errors'] == true) {
-				$oBrowsershot->ignoreHttpsErrors(); // Necessary on quickly configured local hosts with self signed certificates, otherwise linked scripts and stylesheets are ignored
-			}
-				
-			$sBase64 = $oBrowsershot->base64pdf();
+				if($aBrowserShotSettings['ignore_https_errors'] == true) {
+					$oBrowsershot->ignoreHttpsErrors(); // Necessary on quickly configured local hosts with self signed certificates, otherwise linked scripts and stylesheets are ignored
+				}
+					
+				$sBase64 = $oBrowsershot->base64pdf();
 
-			return $sBase64;
-				
+				return $sBase64;
+					
+			}
+			catch(Exception $e) {
+				static::OutputError($e);
+			}
+
 		}
-		catch(Exception $e) {
-			static::OutputError($e);
+		elseif($sMode == 'external') {
+		
+			
+			try {
+				
+				$aExternalRendererSettings = utils::GetCurrentModuleSetting('pdf_external_renderer', []);
+				$aExternalRendererSettings = array_merge([
+					'url' => '',
+					'skip_certificate_check' => false
+				], $aExternalRendererSettings);
+			
+				$sProxyUrl = $aExternalRendererSettings['url'];
+				
+				if($sProxyUrl == '') {
+					throw new Exception('No pdf_external_renderer_url defined.');
+				}
+				
+				// Get HTML for this report
+				$sHTML = static::GetReportFromTwigTemplate($aReportData);
+				
+				// Post data as JSON
+				$ch = curl_init($sProxyUrl);
+				
+				// Create payload
+				$sPayload = json_encode(['data' => $sHTML]);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $sPayload);
+				curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json', 'Accept:application/json']);
+				curl_setopt($ch, CURLOPT_TIMEOUT, 60 * 5);
+
+				// Return response instead of printing.
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				
+				// Possibility to allow self-signed certificates etc
+				if($aExternalRendererSettings['skip_certificate_check'] == true) {
+					
+					curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+
+				}
+				
+				// Send request
+				$sResponse = curl_exec($ch);
+				$iHttpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+				
+				
+				if($iHttpStatus != 200) {
+					throw new Exception('Invalid HTTP response code: '.$iHttpStatus.' - '.curl_error($ch));
+				}
+				
+				curl_close($ch);
+				
+				// Process response
+				$oData = json_decode($sResponse);
+				
+				if(json_last_error() !== JSON_ERROR_NONE) {
+					throw new Exception('Invalid JSON structure: '.$sResponse);
+				}
+				
+				if($oData->error != 0) {
+					throw new Exception('Failed to render PDF. Error code: '.$oData->error.' - message: '.$oData->message);
+				}
+				
+				return $oData->pdf;
+				
+			}
+			catch(Exception $e) {
+				static::OutputError($e);
+			}
+			
+		}
+		else {
+			static::OutputError('Unsupported PDF renderer mode:"'.$sMode.'"');
 		}
 		
 	}
