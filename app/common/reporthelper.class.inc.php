@@ -868,7 +868,7 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 				$sProxyUrl = $aExternalRendererSettings['url'];
 				
 				if($sProxyUrl == '') {
-					throw new Exception('No pdf_external_renderer_url defined.');
+					throw new Exception('No URL specified (pdf_external_renderer_url section).');
 				}
 				
 				// Get HTML for this report
