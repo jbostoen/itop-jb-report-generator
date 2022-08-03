@@ -586,7 +586,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		
 		// Prevent local file inclusion
 		// Mind: needs extra escaping!
-		if(!preg_match('/^[A-Za-z0-9\-_\\/\\\\:]{1,}\.[A-Za-z0-9]{1,}$/', $sTemplateName)) {
+		if(!preg_match('/^[A-Za-z0-9\-_\\\\\/\:]{1,}\.[A-Za-z0-9]{1,}$/', $sTemplateName)) {
 			throw new ApplicationException('Potential disallowed local file inclusion: "'.$sReportFile.'"');
 		}
 		elseif(file_exists($sReportFile) == false) {
