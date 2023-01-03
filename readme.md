@@ -14,7 +14,12 @@ Please get in touch to discuss the terms: **info@jeffreybostoen.be** / https://j
 
 Feature: report generator. Quickly add detailed reports to different classes (detail view and list view).  
 
-⚠ Needs some tweaking to make it work in other environments! The PDF export is unliktely to work on a typical web host unless you have more control over the server as it depends on Puppeteer.
+⚠ Needs some tweaking to make it work in other environments! 
+The PDF export is unlikely to work on a typical web host provider; unless you have more control over the server as it depends on Puppeteer.
+
+This extension is offered for free, pull requests are appreciated.  
+Since many organizations require their own reports, there are no default reports included.  
+Get in touch for support or to get some reports developed for your organization.
 
 
 ## Requirements
@@ -40,7 +45,6 @@ For the version, see composer.json
 |--------------------------- | --------------------------------------------------------------  |
 | chillerlan/php-qrcode      | Optional. QR-code generation.                                   |
 | spatie/browsershot         | Optional. For PDF reporting.                                    |
-| nesk/puphpeteer            | Optional. For PDF reporting.                                    |
 | components/jquery          | Optional. For use of jQuery in templates.                       |
 | twbs/bootstrap             | Optional. For use of Twitter BootStrap in templates.            |
 
@@ -49,9 +53,9 @@ For the version, see composer.json
 ### Cookbook
 
 PHP
-* how to add an item to iTop's "Other actions" menu in both list view and detail view
-* how to obtain iTop from data and render it using a Twig template
-* how to add custom filters to Twig
+* How to add an item to iTop's "Other actions" menu in both list view and detail view.
+* How to obtain iTop from data and render it using a Twig template.
+* How to add custom filters to Twig.
 
 
 ## Documentation
