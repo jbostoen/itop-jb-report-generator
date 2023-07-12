@@ -133,8 +133,7 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 					'&exec_page=reporting.php'.
 					'&exec_env='.utils::GetCurrentEnvironment().
 					'&view='.$sView.
-					'&class='.$oSet_Objects->GetClass().
-					'&report='.$oReflector->getShortName().
+					'&report='.$oReflector->getShortName(). // Provided because this class also contains a constant to the path where the report template is located.
 					(count($sReport::GetURLParameters($oSet_Objects, $sView)) > 0 ? '&'.http_build_query($sReport::GetURLParameters($oSet_Objects, $sView)) : '').
 					'&filter='.urlencode(htmlentities($oSet_Objects->GetFilter()->Serialize(), ENT_QUOTES, 'UTF-8'))
 				;

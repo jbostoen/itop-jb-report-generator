@@ -37,7 +37,13 @@ use \Spatie\Browsershot\Browsershot;
  * Abstract class ReportGeneratorHelper. Helper functions.
  */
 abstract class ReportGeneratorHelper {
+	
 
+	/**
+	 * @var \DBObjectSet|null $oSet_Objects;
+	 */
+	private static $oSet_Objects = null;
+	
 	/**
 	 * Checks whether iTop is 2.7 (LTS) = true or 3.0 or higher = false.
 	 *
@@ -127,6 +133,8 @@ abstract class ReportGeneratorHelper {
 		
 		$sClassName = $oFilter->GetClass();
 		
+		static::SetObjectSet($oSet_Objects);
+		
 		$aSet_Objects = static::ObjectSetToArray($oSet_Objects);
 		
 		
@@ -196,6 +204,33 @@ abstract class ReportGeneratorHelper {
 		}
 		
 	}
+	
+	/**
+	 * Sets iTop objects set (currently being processed).
+	 *
+	 * @param \DBObjectSet $oSet_Objects iTop object set.
+	 *
+	 * @return void
+	 */
+	public static function SetObjectSet(DBObjectSet $oSet_Objects) {
+		
+		static::$oSet_Objects = $oSet_Objects;
+		
+	}
+	
+	/**
+	 * Gets iTop object set (currently being processed).
+	 *
+	 * @return \DBObjectSet
+	 */
+	public static function GetObjectSet() {
+		
+		return static::$oSet_Objects;
+		
+	}
+	
+	
+	
 	
 }
 
@@ -563,12 +598,14 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 	 *  "type" is usually "details" or "list"
 	 *  "templateName.ext" is free to choose
 	 *
+	 *
 	 * @return \String Filename
 	 */
 	public static function GetReportFileName() {
 		
+		$oSet_Objects = ReportGeneratorHelper::GetObjectSet();
 
-		$sClassName = utils::ReadParam('class', '', false, 'class');
+		$sClassName = $oSet_Objects->GetClass();
 		$sType = utils::ReadParam('type', '', false, 'string');
 		$sTemplateName = utils::ReadParam('template', '', false, 'string');
 		$sReport = 'jb_itop_extensions\\report_generator\\'.utils::ReadParam('report', '', false, 'string');

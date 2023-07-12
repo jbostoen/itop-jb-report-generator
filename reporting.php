@@ -59,14 +59,8 @@ use \utils;
 			throw new SecurityException('You must be logged in');
 		}
 		
-		// utils::ReadParam( $sName, $defaultValue = "", $bAllowCLI = false, $sSanitizationFilter = 'parameter' )
-		$sClassName = utils::ReadParam('class', '', false, 'class');
 		$sView = utils::ReadParam('view', '', false, 'string');
 		$sFilter = utils::ReadParam('filter', '', false, 'raw_data');
-		
-		// Load ReportGeneratorExtensions (implementations of iReportGeneratorExtension)
-		$sModuleName = utils::GetCurrentModuleName();
-		$sModuleDir = APPROOT . '/env-' . utils::GetCurrentEnvironment() . '/' . utils::GetCurrentModuleDir(0);
 		
 		// Validation
 		// --
