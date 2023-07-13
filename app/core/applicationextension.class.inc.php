@@ -125,7 +125,6 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 					$aParameters = $aReportSettings['parameters'];
 				}
 				
-				$oReflector = new ReflectionClass($sReport);
 				
 				// URL should pass location of the report (folder/report) and the OQL query for the object(s)
 				$sURL = utils::GetAbsoluteUrlExecPage().'?'.
@@ -133,7 +132,6 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 					'&exec_page=reporting.php'.
 					'&exec_env='.utils::GetCurrentEnvironment().
 					'&view='.$sView.
-					'&report='.$oReflector->getShortName(). // Provided because this class also contains a constant to the path where the report template is located.
 					(count($sReport::GetURLParameters($oSet_Objects, $sView)) > 0 ? '&'.http_build_query($sReport::GetURLParameters($oSet_Objects, $sView)) : '').
 					'&filter='.urlencode(htmlentities($oSet_Objects->GetFilter()->Serialize(), ENT_QUOTES, 'UTF-8'))
 				;

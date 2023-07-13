@@ -28,6 +28,7 @@ SetupWebPage::AddModule(
                 //
                 'datamodel' => array(
 					// 'model.jb-report-generator.php',
+					'vendor/autoload.php',
 					'app/core/applicationextension.class.inc.php',
 					'app/common/reporthelper.class.inc.php',
                 ),

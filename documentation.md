@@ -27,12 +27,7 @@ use \Dict;
  * Class ReportUIElement_UserRequest_Details. Enables a "Show PDF" button in iTop's GUI.
  */
 abstract class ReportUIElement_UserRequest_Details extends AbstractReportUIElement {
-	
-	/**
-	 * @var \String $sModuleDir Name of current module dir. If this report is introduced with a new extension named "jb-report-generator-example", then adjust it like that.
-	 */
-	public const sModuleDir = 'jb-report-generator-example';
-	
+		
 	/**
 	 * Title of the menu item or button
 	 *
@@ -66,6 +61,7 @@ abstract class ReportUIElement_UserRequest_Details extends AbstractReportUIEleme
 			// Some actions which are supported by default (if no 'action' key is specified, it will just render a HTML template).
 			// They include show_pdf (renders in browser unless browser is configured to download the file), download_pdf, attach_pdf (adds as attachment to the iTop object)
 			'action' => 'show_pdf',
+			'reportdir' => 'jb-report-generator'
 		];
 		
 	}

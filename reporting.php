@@ -26,6 +26,7 @@
 namespace jb_itop_extensions\report_generator;
 
 use \ApplicationException;
+use \DBObjectSearch;
 use \Dict;
 use \LoginWebPage;
 // use \MetaModel;
@@ -79,7 +80,8 @@ use \utils;
 			throw new ApplicationException('Valid values for view are: details, list');
 		}
 		
-		ReportGeneratorHelper::DoExec($sFilter, $sView);
+		$oFilter = DBObjectSearch::unserialize($sFilter);
+		ReportGeneratorHelper::DoExec($oFilter, $sView);
 		
 
 	}

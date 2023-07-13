@@ -124,9 +124,8 @@ abstract class ReportGeneratorHelper {
 	 *
 	 * @return void
 	 */
-	public static function DoExec($sFilter, $sView) {
+	public static function DoExec($oFilter, $sView) {
 	
-		$oFilter = DBObjectSearch::unserialize($sFilter);
 		// $aAllArgs = \MetaModel::PrepareQueryArguments($oFilter->GetInternalParams());
 		// $oFilter->ApplyParameters($aAllArgs); // Thought this was necessary for :current_contact_id. Guess not?
 		$oSet_Objects = new CMDBObjectSet($oFilter);		
@@ -171,7 +170,15 @@ abstract class ReportGeneratorHelper {
 		// Expose some variables so they can be used in reports
 		$aReportData['current_contact'] = static::ObjectToArray(UserRights::GetUserObject());
 		$aReportData['request'] = $_REQUEST;
-		$aReportData['application']['url'] = utils::GetDefaultUrlAppRoot();
+		
+		// When running this as a regular user, this is not an issue.
+		// When starting to work with background tasks, this becomes an issue as the path looks like http://C:\xampp64\htdocs\iTop3\web\webservices\cron.php
+		try {
+			$aReportData['application']['url'] = utils::GetDefaultUrlAppRoot();
+		}
+		catch(Exception $e) {
+			$aReportData['application']['url'] = MetaModel::GetConfig()->Get('app_root_url');
+		}
 		
 		// Get all classes implementing iReportProcessor
 		$aReportProcessors = [];
@@ -342,11 +349,6 @@ interface iReportUIElement {
  * Class AbstractReportUIElement. Extend this class (and make it applicable) to add actions (buttons or menus) in iTop.
  */
 abstract class AbstractReportUIElement implements iReportUIElement {
-	
-	/**
-	 * @var \String $sModuleName Name of the module where this is defined
-	 */
-	public const sModuleDir = 'jb-report-generator';
 	
 	/**
 	 * If a button should be shown instead of a menu item
@@ -606,7 +608,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		$oSet_Objects = ReportGeneratorHelper::GetObjectSet();
 
 		$sClassName = $oSet_Objects->GetClass();
-		$sType = utils::ReadParam('type', '', false, 'string');
+		$sView = utils::ReadParam('view', '', false, 'string');
 		$sTemplateName = utils::ReadParam('template', '', false, 'string');
 		$sReport = 'jb_itop_extensions\\report_generator\\'.utils::ReadParam('report', '', false, 'string');
 		
@@ -617,8 +619,8 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		
 		// 2.7: Don't use utils::GetCurrentModuleDir(0).
 		// When new reports are added with a different extension/module, it should return that path instead.		
-		$sCurrentModuleDir = utils::GetAbsoluteModulePath($sReport::sModuleDir);
-		$sReportDir = $sCurrentModuleDir.'reports/templates/'.$sClassName.'/'.$sType;
+		$sCurrentModuleDir = utils::ReadParam('reportdir', '', 'string');
+		$sReportDir = $sCurrentModuleDir.'/reports/templates/'.$sClassName.'/'.$sView;
 		$sReportFile = $sReportDir.'/'.$sTemplateName;
 		
 		// Prevent local file inclusion
@@ -761,14 +763,11 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 		
 			switch($sAction) {
 				case 'show_pdf':
-					header('Content-Type: application/pdf');
-					header('Content-Disposition:inline;filename='.date('Ymd_His').'_'.get_class($oObject).'_'.$oObject->GetKey().'.pdf');
-					echo $sPDF;
-					break;
-				
 				case 'download_pdf':
-					header('Content-Type: application/pdf');
-					header('Content-Disposition:attachment;filename='.date('Ymd_His').'_'.get_class($oObject).'_'.$oObject->GetKey().'.pdf');
+					if(headers_sent() == false) {
+						header('Content-Type: application/pdf');
+						header('Content-Disposition:'.($sAction == 'show_pdf' ? 'inline' : 'attachment').';filename='.date('Ymd_His').'_'.get_class($oObject).'_'.$oObject->GetKey().'.pdf');
+					}
 					echo $sPDF;
 					break;
 					
@@ -790,7 +789,9 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 					// Go back
 					$oUrlMaker = new iTopStandardURLMaker();
 					$sUrl = $oUrlMaker->MakeObjectURL($sObjClass, $sObjKey);
-					header('Location: '.$sUrl);
+					if(headers_sent() == false) {
+						header('Location: '.$sUrl);
+					}
 					exit();
 					break;
 					
@@ -823,7 +824,7 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 			try {		
 				
 				// This default implementation now relies on Spatie's BrowserShot.
-				//It doesn't rely on tcpdf and also no longer on MikeHeartl's WkHtmlToPdf since they still didn't support a lot of modern web standards, e.g. the Twitter BootStrap package.
+				// It doesn't rely on tcpdf and also no longer on MikeHeartl's WkHtmlToPdf since they still didn't support a lot of modern web standards, e.g. the Twitter BootStrap package.
 				
 				// If class doesn't exist, this should fail
 				if(class_exists('\Spatie\Browsershot\Browsershot') == false) {
