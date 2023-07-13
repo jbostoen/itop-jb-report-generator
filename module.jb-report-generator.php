@@ -28,7 +28,7 @@ SetupWebPage::AddModule(
                 //
                 'datamodel' => array(
 					// 'model.jb-report-generator.php',
-					'vendor/autoload.php',
+					// 'vendor/autoload.php', Note: this Twig version is not compatible with iTop 3.0? So don't add this here, as it will crash the setup.
 					'app/core/applicationextension.class.inc.php',
 					'app/common/reporthelper.class.inc.php',
                 ),

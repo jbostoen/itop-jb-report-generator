@@ -618,8 +618,8 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		}
 		
 		// 2.7: Don't use utils::GetCurrentModuleDir(0).
-		// When new reports are added with a different extension/module, it should return that path instead.		
-		$sCurrentModuleDir = utils::ReadParam('reportdir', '', 'string');
+		// When new reports are added with a different extension/module, it should return that path instead.
+		$sCurrentModuleDir = utils::GetAbsoluteModulePath(utils::ReadParam('reportdir', '', 'string'));
 		$sReportDir = $sCurrentModuleDir.'/reports/templates/'.$sClassName.'/'.$sView;
 		$sReportFile = $sReportDir.'/'.$sTemplateName;
 		
