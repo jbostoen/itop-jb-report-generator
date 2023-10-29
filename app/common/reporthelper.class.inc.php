@@ -69,8 +69,14 @@ abstract class ReportGeneratorHelper {
 	public static function ObjectSetToArray(CMDBObjectSet $oObjectSet) {
 		
 		$aResult = [];
+		
+		$aShowFields = [];
+		foreach(MetaModel::ListAttributeDefs($oObjectSet->GetClass()) as $sAttCode => $oAttDef) {
+			$aShowFields[$oObjectSet->GetClass()][] = $sAttCode;
+		}
+		
 		while($oObject = $oObjectSet->Fetch()) {
-			$aResult[] = static::ObjectToArray($oObject);
+			$aResult[] = static::ObjectToArray($oObject, $aShowFields);
 		}
 		
 		return $aResult;
@@ -78,25 +84,31 @@ abstract class ReportGeneratorHelper {
 	}
 
 	/**
-	 * Returns array (similar to REST/JSON) from object
+	 * Returns array (similar to iTop REST/JSON) from object.
 	 *
-	 * @param \DBObject $oObject iTop object
+	 * @param \DBObject $oObject iTop object.
+	 * @param \String[] $aShowFields List of attribute codes to return. If not specified, all values of each attribute code will returned.
 	 *
-	 * @return Array
+	 * @return Array JSON structure
 	 *
 	 * @details 
 	 * Strangely enough ObjectSetToArray takes a CMDBObjectSet, for instance of Attachments.
 	 * However on processing them, it turns into a DBObject?
 	 *
 	 */
-	public static function ObjectToArray(DBObject $oObject) {
+	public static function ObjectToArray(DBObject $oObject, $aShowFields = null) {
 		
 		$oResult = new RestResultWithObjects();
-		$aShowFields = [];
-		$sClass = get_class($oObject);
 		
-		foreach(MetaModel::ListAttributeDefs($sClass) as $sAttCode => $oAttDef) {
-			$aShowFields[$sClass][] = $sAttCode;
+		if($aShowFields === null) {
+				
+			$aShowFields = [];
+			$sClass = get_class($oObject);
+			
+			foreach(MetaModel::ListAttributeDefs($sClass) as $sAttCode => $oAttDef) {
+				$aShowFields[$sClass][] = $sAttCode;
+			}
+			
 		}
 		
 		$oResult->AddObject(0, '', $oObject, $aShowFields);

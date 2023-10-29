@@ -10,6 +10,8 @@ Need assistance with iTop or one of its extensions?
 Need custom development?  
 Please get in touch to discuss the terms: **info@jeffreybostoen.be** / https://jeffreybostoen.be
 
+[Some examples and more info](https://jeffreybostoen.be/itop-extension-report-generator/)
+
 ## What?
 
 Feature: report generator. Quickly add detailed reports to different classes (detail view and list view).  
@@ -20,6 +22,10 @@ The PDF export is unlikely to work on a typical web host provider; unless you ha
 This extension is offered for free, pull requests are appreciated.  
 Since many organizations require their own reports, there are no default reports included.  
 Get in touch for support or to get some reports developed for your organization.
+
+There is also a pro version which introduces the ability to **schedule periodic** reports by e-mail.
+
+Reports can include maps, QR-codes, different graphs than in iTop, ...
 
 
 ## Requirements

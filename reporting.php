@@ -55,6 +55,10 @@ use \utils;
 	
 	try {
 		
+		$iOriginalTimeLimit = ini_get('max_execution_time');
+		set_time_limit(0);
+
+		
 		// Logging in exposed :current_contact_id in OQL
 		if(LoginWebPage::EXIT_CODE_OK != LoginWebPage::DoLoginEx(null /* any portal */, false, LoginWebPage::EXIT_RETURN)) {
 			throw new SecurityException('You must be logged in');
@@ -82,6 +86,9 @@ use \utils;
 		
 		$oFilter = DBObjectSearch::unserialize($sFilter);
 		ReportGeneratorHelper::DoExec($oFilter, $sView);
+		
+		// If needed (most likely exited by now):
+		set_time_limit($iOriginalTimeLimit);
 		
 
 	}
