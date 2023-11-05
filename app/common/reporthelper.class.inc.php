@@ -249,6 +249,37 @@ abstract class ReportGeneratorHelper {
 	}
 	
 	
+	/**
+	 * Trace function used for debugging.
+	 *
+	 * @return \void
+	 */
+	public static function Trace($sMessage) {
+		
+		// Store somewhere?		
+		if(MetaModel::GetModuleSetting(static::MODULE_CODE, 'trace_log', false) == true) {
+			
+			$sTraceFileName = APPROOT.'/log/trace_report_generator.log';
+			
+			try {
+				
+				if(static::$sTraceId == null) {
+				
+					static::$sTraceId = bin2hex(random_bytes(10));
+					
+				}
+				
+				// Not looking to create an error here 
+				file_put_contents($sTraceFileName, date('Y-m-d H:i:s').' | '.static::$sTraceId.' | '.$sMessage.PHP_EOL , FILE_APPEND | LOCK_EX);
+				
+			}
+			catch(Exception $e) {
+				// Don't do anything
+			}
+			
+		}
+		
+	}
 	
 	
 }
@@ -505,12 +536,14 @@ abstract class ReportProcessorParent implements iReportProcessor {
 	 */
 	public static function OutputError(Exception $e) {
 		
+		static::Trace('Exception occurred: '.$e->GetMessage());
+		
 		if(ReportGeneratorHelper::IsLegacy() == true) {
 			
 			require_once(APPROOT.'/application/nicewebpage.class.inc.php');
 			$oP = new NiceWebPage(Dict::S('UI:PageTitle:FatalError'));
 			$oP->add("<h1>".Dict::S('UI:FatalErrorMessage')."</h1>\n");	
-			$oP->add(Dict::Format('UI:Error_Details', $e->getMessage()));	
+			$oP->add(Dict::Format('UI:Error_Details', $e->getMessage()));
 			$oP->output();
 			die();
 			
