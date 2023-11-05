@@ -3,14 +3,14 @@
 /**
  * @copyright   Copyright (c) 2019-2023 Jeffrey Bostoen
  * @license     https://www.gnu.org/licenses/gpl-3.0.en.html
- * @version     2.7.230624
+ * @version     2.7.231105
  *
  * iTop module definition file
  */
  
 SetupWebPage::AddModule(
         __FILE__, // Path to the current file, all other file names are relative to the directory containing this file
-        'jb-report-generator/2.7.230624',
+        'jb-report-generator/2.7.231105',
         array(
                 // Identification
                 //
