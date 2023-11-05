@@ -38,6 +38,19 @@ use \Spatie\Browsershot\Browsershot;
  */
 abstract class ReportGeneratorHelper {
 	
+	
+	/** @var \Boolean $bStopProcessing Boolean which can force further processing to stop. Once set to true, all other processing that is supposed to follow, will be skipped. */
+	private static $bStopProcessing = false;
+	
+	/** @var \Boolean $bSuppressOutput Boolean which indicates whether output will be suppressed (and stored internally in the below $aHeaders and $sOutput properties. */
+	private static $bSuppressOutput = false;
+	
+	/** @var $aHeaders Array in which PHP headers will be stored if output is suppressed. */
+	private static $aHeaders = [];
+	
+	/** @var $sOutput String in which output will be stored if output is suppressed. */
+	private static $sOutput = '';
+	
 
 	/**
 	 * @var \DBObjectSet|null $oSet_Objects;
@@ -137,6 +150,9 @@ abstract class ReportGeneratorHelper {
 	 * @return void
 	 */
 	public static function DoExec($oFilter, $sView) {
+		
+		static::ClearHeaders();
+		static::ClearOutput();
 	
 		// $aAllArgs = \MetaModel::PrepareQueryArguments($oFilter->GetInternalParams());
 		// $oFilter->ApplyParameters($aAllArgs); // Thought this was necessary for :current_contact_id. Guess not?
@@ -216,10 +232,17 @@ abstract class ReportGeneratorHelper {
 
 		// Execute each ReportProcessor
 		foreach($aReportProcessors as $sClassName) {
+			
 			$oSet_Objects->Rewind();
 			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
 				$sClassName::DoExec($aReportData, $oSet_Objects);
 			}
+			
+			// A processor might indicate that further processing should be abandoned.
+			if(static::GetStopProcessing() == true) {
+				break;
+			}
+			
 		}
 		
 	}
@@ -281,6 +304,143 @@ abstract class ReportGeneratorHelper {
 		
 	}
 	
+	
+	/**
+	 * Clears the headers.
+	 *
+	 * @return void
+	 */
+	public static function ClearHeaders() {
+		
+		static::$aHeaders = [];
+		
+	}
+	
+	/**
+	 * Sets a header.
+	 *
+	 * @param \String $sHeaderName Header name.
+	 * @param \String $sHeaderValue Value of the header.
+	 *
+	 * @return void
+	 */
+	public static function SetHeader($sHeaderName, $sHeaderValue) {
+		
+		if(static::$bSuppressOutput == false && headers_sent() == false) {
+			
+			header($sHeaderName.': '.$sHeaderValue);
+			
+		}
+		else {
+			
+			static::$aHeaders[$sHeaderName] = $sHeaderValue;
+	
+		}
+	
+	}
+	
+	/**
+	 * Returns the headers.
+	 *
+	 * @return \String
+	 */
+	public static function GetHeaders() {
+		
+		return static::$aHeaders;
+		
+	}
+	
+	/**
+	 * Clears the output.
+	 *
+	 * @return void
+	 */
+	public static function ClearOutput() {
+		
+		static::$sOutput = '';
+		
+	}
+	
+	/**
+	 * Adds to the output.
+	 *
+	 * @param \String $sOutput Output.
+	 *
+	 * @return void
+	 */
+	public static function AddOutput($sOutput) {
+		
+		if(static::$bSuppressOutput == false) {
+		
+			echo $sOutput;
+			
+		}
+		else {
+			
+			static::$sOutput .= $sOutput;
+	
+		}
+		
+	}
+	
+	/**
+	 * Returns the output.
+	 *
+	 * @return \String
+	 */
+	public static function GetOutput() {
+		
+		return static::$sOutput;
+		
+	}
+	
+	/**
+	 * Sets whether or not the report processor should stop.
+	 *
+	 * @param \Boolean $bValue True/false.
+	 *
+	 * @return void
+	 */
+	public static function SetStopProcessing($bValue) {
+		
+		static::$bStopProcessing = $bValue;
+		
+	}
+	
+	/**
+	 * Returns whether or not the report processor should stop.
+	 *
+	 * @return \Boolean
+	 */
+	public static function GetStopProcessing() {
+		
+		return static::$bStopProcessing;
+		
+	}
+	
+	/**
+	 * Sets whether or not the output should be suppressed (in which case it will be stored internally).
+	 *
+	 * @param \Boolean $bValue True/false.
+	 *
+	 * @param \Boolean
+	 */
+	public static function SetSuppressOutput($bValue) {
+		
+		static::$bSuppressOutput = $bValue;
+		
+	}
+	
+	/**
+	 * Returns whether or not the output should be suppressed (in which case it will be stored internally).
+	 *
+	 * @return \Boolean
+	 */
+	public static function GetSuppressOutput() {
+		
+		return static::$bSuppressOutput;
+		
+	}
 	
 }
 
@@ -536,7 +696,7 @@ abstract class ReportProcessorParent implements iReportProcessor {
 	 */
 	public static function OutputError(Exception $e) {
 		
-		static::Trace('Exception occurred: '.$e->GetMessage());
+		static::Trace('Exception occurred: '.$e->GetMessage()); 
 		
 		if(ReportGeneratorHelper::IsLegacy() == true) {
 			
@@ -625,10 +785,10 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 			// Check if known extension, set MIME Type
 			$sReportFileExtension = strtolower(pathinfo($sReportFile, PATHINFO_EXTENSION));
 			if(isset($aExtensionsToContentTypes[$sReportFileExtension]) == true) {
-				header('Content-Type: '.$aExtensionsToContentTypes[$sReportFileExtension]);
+				ReportGeneratorHelper::SetHeader('Content-Type', $aExtensionsToContentTypes[$sReportFileExtension]);
 			}
 			
-			echo $sHTML;
+			ReportGeneratorHelper::AddOutput($sHTML);
 		
 		}
 		catch(Exception $e) {
@@ -809,11 +969,11 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 			switch($sAction) {
 				case 'show_pdf':
 				case 'download_pdf':
-					if(headers_sent() == false) {
-						header('Content-Type: application/pdf');
-						header('Content-Disposition:'.($sAction == 'show_pdf' ? 'inline' : 'attachment').';filename='.date('Ymd_His').'_'.get_class($oObject).'_'.$oObject->GetKey().'.pdf');
-					}
-					echo $sPDF;
+					
+					ReportGeneratorHelper::SetHeader('Content-Type', 'application/pdf');
+					ReportGeneratorHelper::SetHeader('Content-Disposition', ($sAction == 'show_pdf' ? 'inline' : 'attachment').';filename='.date('Ymd_His').'_'.get_class($oObject).'_'.$oObject->GetKey().'.pdf');
+					
+					ReportGeneratorHelper::AddOutput($sPDF);
 					break;
 					
 				case 'attach_pdf':
@@ -834,10 +994,12 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 					// Go back
 					$oUrlMaker = new iTopStandardURLMaker();
 					$sUrl = $oUrlMaker->MakeObjectURL($sObjClass, $sObjKey);
-					if(headers_sent() == false) {
-						header('Location: '.$sUrl);
-					}
-					exit();
+					
+					ReportGeneratorHelper::SetHeader('Location', $sUrl);
+					
+					ReportGeneratorHelper::SetStopProcessing(true);
+					
+					
 					break;
 					
 					
