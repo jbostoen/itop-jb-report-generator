@@ -38,6 +38,9 @@ use \Spatie\Browsershot\Browsershot;
  */
 abstract class ReportGeneratorHelper {
 	
+	/** @const \String MODULE_CODE Module code */
+	const MODULE_CODE = 'jb-report-generator';
+	
 	
 	/** @var \Boolean $bStopProcessing Boolean which can force further processing to stop. Once set to true, all other processing that is supposed to follow, will be skipped. */
 	private static $bStopProcessing = false;
@@ -696,7 +699,7 @@ abstract class ReportProcessorParent implements iReportProcessor {
 	 */
 	public static function OutputError(Exception $e) {
 		
-		static::Trace('Exception occurred: '.$e->GetMessage()); 
+		ReportGeneratorHelper::Trace('Exception occurred: '.$e->GetMessage()); 
 		
 		if(ReportGeneratorHelper::IsLegacy() == true) {
 			
