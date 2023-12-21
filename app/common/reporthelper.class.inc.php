@@ -757,7 +757,7 @@ abstract class ReportProcessorAttachments extends ReportProcessorParent  {
 		// Retrieve attachments
 		$oFilter_Attachments = new DBObjectSearch('Attachment');
 		$oFilter_Attachments->AddCondition('item_id', $aKeys, 'IN');
-		$oFilter_Attachments->AddCondition('item_class', $sClassName);
+		$oFilter_Attachments->AddCondition('item_class', $oSet_Objects->GetClass());
 		$oSet_Attachments = new CMDBObjectSet($oFilter_Attachments);
 		
 		foreach($aSet_Objects as &$aObject) {
