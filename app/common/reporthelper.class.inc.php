@@ -159,37 +159,13 @@ abstract class ReportGeneratorHelper {
 	
 		// $aAllArgs = \MetaModel::PrepareQueryArguments($oFilter->GetInternalParams());
 		// $oFilter->ApplyParameters($aAllArgs); // Thought this was necessary for :current_contact_id. Guess not?
-		$oSet_Objects = new CMDBObjectSet($oFilter);		
+		$oSet_Objects = new CMDBObjectSet($oFilter);
 		
 		$sClassName = $oFilter->GetClass();
 		
 		static::SetObjectSet($oSet_Objects);
 		
 		$aSet_Objects = static::ObjectSetToArray($oSet_Objects);
-		
-		
-		// Get keys to build one OQL Query
-		$aKeys = [ -1];
-		foreach($aSet_Objects as $aObject) {
-			$aKeys[] = $aObject['key'];
-		}
-		
-		// Retrieve attachments
-		$oFilter_Attachments = new DBObjectSearch('Attachment');
-		$oFilter_Attachments->AddCondition('item_id', $aKeys, 'IN');
-		$oFilter_Attachments->AddCondition('item_class', $sClassName);
-		$oSet_Attachments = new CMDBObjectSet($oFilter_Attachments);
-		$aSet_Attachments = static::ObjectSetToArray($oSet_Attachments);
-		
-		foreach($aSet_Objects as &$aObject) {
-			
-			$aObject['attachments'] = array_filter($aSet_Attachments, function($aAttachment) use ($aObject) {
-				return ($aAttachment['fields']['item_id'] = $aObject['key']);
-			});
-			
-			$aObject['attachments'] = array_values($aObject['attachments']);
-			
-		}
 		
 		if($sView == 'details') {
 			$aReportData['item'] = array_values($aSet_Objects)[0];
@@ -705,7 +681,7 @@ abstract class ReportProcessorParent implements iReportProcessor {
 			
 			require_once(APPROOT.'/application/nicewebpage.class.inc.php');
 			$oP = new NiceWebPage(Dict::S('UI:PageTitle:FatalError'));
-			$oP->add("<h1>".Dict::S('UI:FatalErrorMessage')."</h1>\n");	
+			$oP->add("<h1>".Dict::S('UI:FatalErrorMessage')."</h1>\n");
 			$oP->add(Dict::Format('UI:Error_Details', $e->getMessage()));
 			$oP->output();
 			die();
@@ -722,6 +698,84 @@ abstract class ReportProcessorParent implements iReportProcessor {
 	
 }
 
+/**
+ * Class ReportProcessorAttachments. Only enriches the dataset with related attachments when needed.
+ */
+abstract class ReportProcessorAttachments extends ReportProcessorParent  {
+	
+	/**
+	 * @var \Integer $iRank Rank. Lower number = goes first. Should run before ReportProcessorTwig and ReportProcessorTwigToPDF.
+	 */
+	public static $iRank = 1;
+		
+	/**
+	 * @inheritDoc
+	 *
+	 * @details This is an attempt for backward compatibility as of 21st of December, 2023.
+	 *
+	 */
+	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
+		
+		// Always applicable when no action is specified.
+		$sAction = utils::ReadParam('action', '', false, 'string');
+		
+		// Same conditions as for ReportProcessorTwig, ReportProcessorTwigToPDF.
+		$bIsDesiredAction = ($sAction == '' || in_array($sAction, ['download_pdf', 'show_pdf', 'attach_pdf']));
+		
+		if($bIsDesiredAction == true) {
+				
+			// Does the file contain an indication of '.attachments' and the use of 'fields.contents' (.data, .mimetype, .filename)?
+			$sFileName = ReportProcessorTwig::GetReportFileName();
+			
+			$sContent = file_get_contents($sFileName);
+			
+			if(preg_match('/\.attachments/', $sContent) && preg_match('/fields\.contents\.(data|mimetype|filename)/', $sContent)) {
+			
+				return true;
+			}
+			
+				
+		}
+			
+		
+		return false;
+		
+		
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
+	public static function EnrichData(&$aReportData, DBObjectSet $oSet_Objects) {
+		
+		// Get keys to build one OQL Query
+		$aKeys = [ -1];
+		foreach($aSet_Objects as $aObject) {
+			$aKeys[] = $aObject['key'];
+		}
+		
+		// Retrieve attachments
+		$oFilter_Attachments = new DBObjectSearch('Attachment');
+		$oFilter_Attachments->AddCondition('item_id', $aKeys, 'IN');
+		$oFilter_Attachments->AddCondition('item_class', $sClassName);
+		$oSet_Attachments = new CMDBObjectSet($oFilter_Attachments);
+		
+		foreach($aSet_Objects as &$aObject) {
+			
+			// Attachments are linked to one object only.
+			// So it's okay to just convert it here when needed.
+			$oSet_Attachments->Rewind();
+			
+			while($oAttachment = $oSet_Attachments->Fetch()) {
+				$aObject['attachments'][] = static::ObjectToArray($oAttachment);
+			}
+			
+		}
+	
+	}
+	
+}
+
 
 /**
  * Class ReportProcessorTwig. Renders a report with basic object details using Twig.
@@ -734,7 +788,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
 		
 		// Always applicable when no action is specified.
-		$sAction = utils::ReadParam('action', '', false, 'string');		
+		$sAction = utils::ReadParam('action', '', false, 'string');
 		return ($sAction == '');
 		
 	}
@@ -901,7 +955,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 					$oQRCode = new \chillerlan\QRCode\QRCode($aOptions);
 
 					// and dump the output 
-					return '<img src="'.$oQRCode->render($sString).'">';		
+					return '<img src="'.$oQRCode->render($sString).'">';
 			
 				})
 			);
