@@ -10,6 +10,8 @@
 
 namespace jb_itop_extensions\report_generator;
 
+use \jb_itop_extensions\report_generator\ReportGeneratorHelper;
+
 // Internals
 use \ReflectionClass;
 
@@ -114,7 +116,7 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 			if($sReport::IsApplicable($oSet_Objects, $sView) == true) {
 		
 				// UID must simply be unique.Keep alphanumerical version of filename.
-				$sUID = utils::GetCurrentModuleName().'_'.preg_replace('/[^\dA-Za-z_-]/i', '', $sReport).'_'.rand(0, 10000);
+				$sUID = ReportGeneratorHelper::MODULE_CODE.'_'.preg_replace('/[^\dA-Za-z_-]/i', '', $sReport).'_'.rand(0, 10000);
 				
 				// Add shortcut (button) or keep menu item?
 				static::$shortcut_actions .= ($sReport::ForceButton() == true ? ','.$sUID : '');
@@ -128,7 +130,7 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 				
 				// URL should pass location of the report (folder/report) and the OQL query for the object(s)
 				$sURL = utils::GetAbsoluteUrlExecPage().'?'.
-					'&exec_module='.utils::GetCurrentModuleName().
+					'&exec_module='.ReportGeneratorHelper::MODULE_CODE.
 					'&exec_page=reporting.php'.
 					'&exec_env='.utils::GetCurrentEnvironment().
 					'&view='.$sView.

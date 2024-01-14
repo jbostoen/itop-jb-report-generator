@@ -1081,7 +1081,7 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 	 */
 	public static function GetPDFObject($aReportData) {
 		
-		$sMode = utils::GetCurrentModuleSetting('pdf_renderer', 'browsershot');
+		$sMode = MetaModel::GetModuleSetting(ReportGeneratorHelper::MODULE_CODE, 'pdf_renderer', 'browsershot');
 		
 		if($sMode == 'browsershot') {
 			
@@ -1098,7 +1098,7 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 				// Get HTML for this report
 				$sHTML = static::GetReportFromTwigTemplate($aReportData);
 				
-				$aBrowserShotSettings = utils::GetCurrentModuleSetting('browsershot', [
+				$aBrowserShotSettings = MetaModel::GetModuleSetting(ReportGeneratorHelper::MODULE_CODE, 'browsershot', [
 					'node_binary' => 'node.exe', // Directory with node binary is in an environmental variable
 					'npm_binary' => 'npm.cmd', // Directory with NPM cmd file is in an environmental variable
 					'chrome_path' => 'C:/progra~1/Google/Chrome/Application/chrome.exe', // Directory with a Chrome browser executable
@@ -1161,7 +1161,7 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 			
 			try {
 				
-				$aExternalRendererSettings = utils::GetCurrentModuleSetting('pdf_external_renderer', []);
+				$aExternalRendererSettings = MetaModel::GetModuleSetting(ReportGeneratorHelper::MODULE_CODE, 'pdf_external_renderer', []);
 				$aExternalRendererSettings = array_merge([
 					'url' => '',
 					'skip_certificate_check' => false
