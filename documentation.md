@@ -124,7 +124,6 @@ Attachments are also available for each item.
 
 ## Miscellaneous variables
 
-⚠️ iTop 3.0 has possibly introduced alternative variables and function calls for their Twig system. This has not been tested yet, but this report generator extension is also compatible with 2.7.
 
 Available in templates using the built-in Twig reporting:
 * ```itop.root_url```: iTop root URL
@@ -135,7 +134,6 @@ Available in templates using the built-in Twig reporting:
 
 # Using iTop language strings
 
-⚠️ iTop 3.0 has possibly introduced alternative variables and function calls for their Twig system. This has not been tested yet, but this report generator extension is also compatible with 2.7.
 
 There's a Twig Filter named ```dict_s``` in templates.
 Where in iTop code this would be ```Dict::S('languagestring')```, 
@@ -163,7 +161,7 @@ This extension can use a wrapper to generate PDF documents.
 There's several PDF libraries available, each with their own benefits and limitations.
 Natively, this extension uses **Spatie/BrowserShot** since it seemed to be stable and can handle modern web standards. At the moment, it's well maintained.  
 
-Default example settings are included for Windows systems.
+Default example settings are included for the Microsoft Windows operating system.
 
 ```
 'jb-report-generator' => array(
@@ -225,15 +223,15 @@ A JSON response is expected:
 Install [Node.Js](https://nodejs.org/en/download/) on the web server.
 
 NPM (Node Package Manager) needed:
-* in directory of this extension: ```npm install puppeteer```
+* In directory of this extension: ```npm install puppeteer```
 
 Use **composer** to install **Spatie/BrowserShot**
 
 Don't forget to install Google Chrome.
 
-Check if the "PATH" variable n (Windows) System Environment Variables includes the paths where nodejs.exe and npm.cmd are located.
 
 ### How to check node and npm installations
+
 
 Check the versions by running this on the command line:
 ```
@@ -259,23 +257,21 @@ Quick troubleshoot script:
 
 ## Hints
 
-* Using HTML headers, you can build navigation in the PDF document
-* Install the fonts on your local system rather than relying on web fonts
+* Install the fonts on the system which renders the PDF. Don't rely on web fonts.
 * It may be worth checking out Combodo's "iFrame dashlet" to embed reports
+* With the previous implementation (wkhtmltopdf), it was possible to use HTML headings to build a Table of Content. Unfortunately, with Spatie's BrowserShot it's not possible at the moment.
 
 ## Issues
 
 
 ### No PDF, Errors during rendering
 
-These are personal notes I made while testing/debugging on Windows.
+These are personal notes I made while testing/debugging on a Microsoft Windows operating system.
 
-Check if the "PATH" variable n (Windows) System Environment Variables includes the paths where nodejs.exe and npm.cmd are located.
 
-Sandbox mode is necessary for XAMPP x64 on Windows. 
+1) Check if the "PATH" variable in System Environment Variables includes the paths where nodejs.exe and npm.cmd are located.
 
-Still having issues?
-See if there's info in the error file (**%temp%\sf_proc_00.err**) (Symfony framework)
+2) See if there's info in the error file (**%temp%\sf_proc_00.err**) (Symfony framework)
 
 
 Various errors may occur, including E_CONNRESET.

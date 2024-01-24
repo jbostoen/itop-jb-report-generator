@@ -1,9 +1,9 @@
 {
     "require": {
-        "twig/twig": "^3.3",
-        "chillerlan/php-qrcode": "^4.3.4",
-        "spatie/browsershot": "^3.57.2",
-        "components/jquery": "^3.6",
-        "twbs/bootstrap": "^5.2.3"
+        "twig/twig": "^3.",
+        "chillerlan/php-qrcode": "^4.",
+        "spatie/browsershot": "^3.",
+        "components/jquery": "^3.",
+        "twbs/bootstrap": "^5."
     }
 }
