@@ -727,7 +727,7 @@ abstract class ReportProcessorAttachments extends ReportProcessorParent  {
 			// Does the file contain an indication of '.attachments' and the use of 'fields.contents' (.data, .mimetype, .filename)?
 			$sFileName = ReportProcessorTwig::GetReportFileName();
 			
-			$sContent = file_get_contents($sFileName);
+			$sContent = file_get_contents(APPROOT.$sFileName);
 			
 			if(preg_match('/\.attachments/', $sContent) && preg_match('/fields\.contents\.(data|mimetype|filename)/', $sContent)) {
 			
@@ -882,7 +882,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		// 2.7: Don't use utils::GetCurrentModuleDir(0).
 		// When new reports are added with a different extension/module, it should return that path instead.
 		$sCurrentModuleDir = utils::GetAbsoluteModulePath(utils::ReadParam('reportdir', '', 'string'));
-		$sReportDir = $sCurrentModuleDir.'/reports/templates/'.$sClassName.'/'.$sView;
+		$sReportDir = $sCurrentModuleDir.'reports/templates/'.$sClassName.'/'.$sView;
 		$sReportFile = $sReportDir.'/'.$sTemplateName;
 		
 		// Prevent local file inclusion
