@@ -727,7 +727,7 @@ abstract class ReportProcessorAttachments extends ReportProcessorParent  {
 			// Does the file contain an indication of '.attachments' and the use of 'fields.contents' (.data, .mimetype, .filename)?
 			$sFileName = ReportProcessorTwig::GetReportFileName();
 			
-			$sContent = file_get_contents(APPROOT.$sFileName);
+			$sContent = file_get_contents(APPROOT.'env-'.utils::GetCurrentEnvironment().$sFileName);
 			
 			if(preg_match('/\.attachments/', $sContent) && preg_match('/fields\.contents\.(data|mimetype|filename)/', $sContent)) {
 			
