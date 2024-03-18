@@ -197,10 +197,16 @@ abstract class ReportGeneratorHelper {
 		
 		// Enrich first
 		foreach($aReportProcessors as $sClassName) {
+
 			$oSet_Objects->Rewind();
 			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
+				
+				// Quick reset, so it doesn't need to be taken care of each time in the DoExec() method.
+				$oSet_Objects->Rewind();
 				$sClassName::EnrichData($aReportData, $oSet_Objects);
+
 			}
+
 		}
 		
 		// Sort based on 'rank' of each class
@@ -214,7 +220,11 @@ abstract class ReportGeneratorHelper {
 			
 			$oSet_Objects->Rewind();
 			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
+
+				// Quick reset, so it doesn't need to be taken care of each time in the DoExec() method.
+				$oSet_Objects->Rewind();
 				$sClassName::DoExec($aReportData, $oSet_Objects);
+
 			}
 			
 			// A processor might indicate that further processing should be abandoned.
@@ -727,7 +737,7 @@ abstract class ReportProcessorAttachments extends ReportProcessorParent  {
 			// Does the file contain an indication of '.attachments' and the use of 'fields.contents' (.data, .mimetype, .filename)?
 			$sFileName = ReportProcessorTwig::GetReportFileName();
 			
-			$sContent = file_get_contents(APPROOT.'env-'.utils::GetCurrentEnvironment().$sFileName);
+			$sContent = file_get_contents(APPROOT.'env-'.utils::GetCurrentEnvironment().'/'.$sFileName);
 			
 			if(preg_match('/\.attachments/', $sContent) && preg_match('/fields\.contents\.(data|mimetype|filename)/', $sContent)) {
 			
