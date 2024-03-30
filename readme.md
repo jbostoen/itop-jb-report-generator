@@ -1,6 +1,6 @@
 # jb-report-generator
 
-Copyright (c) 2019-2023 Jeffrey Bostoen
+Copyright (c) 2019-2024 Jeffrey Bostoen
 
 [![License](https://img.shields.io/github/license/jbostoen/iTop-custom-extensions)](https://github.com/jbostoen/iTop-custom-extensions/blob/master/license.md)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/jbostoen)
@@ -28,42 +28,6 @@ There is also a pro version which introduces the ability to **schedule periodic*
 Reports can include maps, QR-codes, different graphs than in iTop, ...
 
 
-## Requirements
-
-This extension uses some PHP packages that are installed with composer.  
-Use composer to install and update all required packages (composer.json is included)
-
-Needs at least PHP 7.4
-
-
-**Required packages**:
-
-For the version, see composer.json
-
-| Package 	                 | Comment                                                         |
-|--------------------------- | --------------------------------------------------------------  |
-| twig/twig                  | Templates                                                       |
-
-
-**Optional packages**:
-
-| Package 	                 | Comment                                                         |
-|--------------------------- | --------------------------------------------------------------  |
-| chillerlan/php-qrcode      | Optional. QR-code generation.                                   |
-| spatie/browsershot         | Optional. For PDF reporting.                                    |
-| components/jquery          | Optional. For use of jQuery in templates.                       |
-| twbs/bootstrap             | Optional. For use of Twitter BootStrap in templates.            |
-
-
-
-### Cookbook
-
-PHP
-* How to add an item to iTop's "Other actions" menu in both list view and detail view.
-* How to obtain iTop from data and render it using a Twig template.
-* How to add custom filters to Twig.
-
-
 ## Documentation
 
 See [Documentation](docs/main.md)
@@ -83,18 +47,11 @@ You can sponsor the development of these features:
 
 Feel free to suggest other ideas!
 
-## Upgrading
 
-### From before 2022-06-14
+### Cookbook
 
-Some renaming was done to make things more clear:
-
-| Before                  | After                        |
-| ----------------------- | ---------------------------- |
-| iReport                 | iReportUIElement             |
-| DefaultReport           | AbstractReportUIElement      |
-| iReportTool             | iReportProcessor             |
-| RTParent                | ReportProcessorParent        |
-| RTTwig                  | ReportProcessorTwig          |
-| RTTwigToPDF             | ReportProcessorTwigToPDF     |
+PHP
+* How to add an item to iTop's "Other actions" menu in both list view and detail view.
+* How to obtain iTop from data and render it using a Twig template.
+* How to add custom filters to Twig.
 

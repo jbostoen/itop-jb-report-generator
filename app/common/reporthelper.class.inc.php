@@ -49,11 +49,14 @@ abstract class ReportGeneratorHelper {
 	/** @var \Boolean $bSuppressOutput Boolean which indicates whether output will be suppressed (and stored internally in the below $aHeaders and $sOutput properties. */
 	private static $bSuppressOutput = false;
 	
-	/** @var $aHeaders Array in which PHP headers will be stored if output is suppressed. */
+	/** @var \Array $aHeaders in which PHP headers will be stored if output is suppressed. */
 	private static $aHeaders = [];
 	
-	/** @var $sOutput String in which output will be stored if output is suppressed. */
+	/** @var \String $sOutput in which output will be stored if output is suppressed. */
 	private static $sOutput = '';
+
+	/** @var \String Trace ID. */
+	private static $sTraceId = '';
 	
 
 	/**
@@ -636,7 +639,7 @@ abstract class ReportProcessorParent implements iReportProcessor {
 	/**
 	 * Whether or not this extension is applicable
 	 *
-	 * @param \DBObjectSet[] $oSet_Objects CMDBObjectSet of iTop objects which are being processed
+	 * @param \DBObjectSet $oSet_Objects CMDBObjectSet of iTop objects which are being processed
 	 * @param \String $sView View. 'details', 'list'
 	 * *
 	 * @return \Boolean
@@ -653,7 +656,7 @@ abstract class ReportProcessorParent implements iReportProcessor {
 	 * Rendering hook. Can enrich report data (fetching additional info).
 	 *
 	 * @param \Array $aReportData Report data
-	 * @param \DBObjectSet[] $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
 	 *
 	 * @return void
 	 */
@@ -667,7 +670,7 @@ abstract class ReportProcessorParent implements iReportProcessor {
 	 * Action hook
 	 *
 	 * @param \Array $aReportData Report data
-	 * @param \DBObjectSet[] $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
 	 *
 	 * @return void
 	 */
@@ -731,7 +734,7 @@ abstract class ReportProcessorAttachments extends ReportProcessorParent  {
 		$sAction = utils::ReadParam('action', '', false, 'string');
 		
 		// Same conditions as for ReportProcessorTwig, ReportProcessorTwigToPDF.
-		$bIsDesiredAction = ($sAction == '' || in_array($sAction, ['download_pdf', 'show_pdf', 'attach_pdf']));
+		$bIsDesiredAction = in_array($sAction, ['', 'download_pdf', 'show_pdf', 'attach_pdf']);
 		
 		if($bIsDesiredAction == true) {
 				
@@ -761,26 +764,43 @@ abstract class ReportProcessorAttachments extends ReportProcessorParent  {
 		
 		// Get keys to build one OQL Query
 		$aKeys = [ -1];
-		foreach($aSet_Objects as $aObject) {
-			$aKeys[] = $aObject['key'];
+		
+		while($oObj = $oSet_Objects->Fetch()) {
+			$aKeys[] = $oObj->GetKey();
 		}
 		
-		// Retrieve attachments
+		// Retrieve attachments.
 		$oFilter_Attachments = new DBObjectSearch('Attachment');
 		$oFilter_Attachments->AddCondition('item_id', $aKeys, 'IN');
 		$oFilter_Attachments->AddCondition('item_class', $oSet_Objects->GetClass());
 		$oSet_Attachments = new CMDBObjectSet($oFilter_Attachments);
 		
-		foreach($aSet_Objects as &$aObject) {
-			
+		// In case of 'list':
+		if(isset($aReportData['items']) == true) {
+			foreach($aReportData['items'] as &$aObject) {
+				
+				// Attachments are linked to one object only.
+				// So it's okay to just convert it here when needed.
+				$oSet_Attachments->Rewind();
+				
+				while($oAttachment = $oSet_Attachments->Fetch()) {
+					$aObject['attachments'][] = ReportGeneratorHelper::ObjectToArray($oAttachment);
+				}
+				
+			}
+		}
+
+		// In case of 'details':
+		if(isset($aReportData['item']) == true) {
+
 			// Attachments are linked to one object only.
 			// So it's okay to just convert it here when needed.
 			$oSet_Attachments->Rewind();
 			
 			while($oAttachment = $oSet_Attachments->Fetch()) {
-				$aObject['attachments'][] = static::ObjectToArray($oAttachment);
+				$aReportData['item']['attachments'][] = ReportGeneratorHelper::ObjectToArray($oAttachment);
 			}
-			
+
 		}
 	
 	}
@@ -965,7 +985,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 			
 			$oTwigEnv->addFilter(new \Twig\TwigFilter('qr', function ($sString) {
 				
-					// Suppress empty attributes
+					// Suppress empty attributes.
 					if($sString == '') {
 						return '';
 					}
@@ -973,16 +993,16 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 					$aOptions = new \chillerlan\QRCode\QROptions([
 						'version'    => 5,
 						// 'outputType' => \chillerlan\QRCode\QRCode::OUTPUT_MARKUP_SVG,
-						'outputType' => \chillerlan\QRCode\QRCode::OUTPUT_IMAGE_PNG, // SVG is not rendered with wkhtmltopdf 0.12.5 (with patched qt) 
-						'eccLevel'   => \chillerlan\QRCode\QRCode::ECC_L,
+						// 'outputType' => \chillerlan\QRCode\Output\QROutputInterface::GDIMAGE_PNG, // SVG is not rendered with wkhtmltopdf 0.12.5 (with patched qt) 
+						'eccLevel'   => \chillerlan\QRCode\Common\EccLevel::L,
 						'scale'		 => 3 // Note: scale is for SVG, IMAGE_*. output. Irrelevant for HTML output; use CSS
 					]);
 
-					// invoke a fresh QRCode instance
+					// Invoke a fresh QRCode instance.
 					$oQRCode = new \chillerlan\QRCode\QRCode($aOptions);
 
-					// and dump the output 
-					return '<img src="'.$oQRCode->render($sString).'">';
+					// Dump the output .
+					return '<img class="qr" src="'.$oQRCode->render($sString).'">';
 			
 				})
 			);
@@ -1018,7 +1038,7 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 	/**
 	 * @inheritDoc
 	 *
-	 * @param \DBObjectSet[] $oSet_Objects CMDBObjectSet of iTop objects which are being processed
+	 * @param \DBObjectSet $oSet_Objects CMDBObjectSet of iTop objects which are being processed
 	 * @param \String $sView View. 'details', 'list'
 	 * *
 	 * @return \Boolean
@@ -1254,7 +1274,7 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 			
 		}
 		else {
-			static::OutputError('Unsupported PDF renderer mode:"'.$sMode.'"');
+			static::OutputError(new Exception('Unsupported PDF renderer mode: "'.$sMode.'"'));
 		}
 		
 	}
