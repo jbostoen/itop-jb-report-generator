@@ -16,6 +16,7 @@ use \Exception;
 use \ReflectionClass;
 
 // iTop internals
+use \ApplicationContext;
 use \ApplicationException;
 use \CMDBObjectSet;
 use \DBObject;
@@ -884,24 +885,35 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		$sTemplateName = utils::ReadParam('template', '', false, 'string');
 		$sReport = 'jb_itop_extensions\\report_generator\\'.utils::ReadParam('report', '', false, 'string');
 		
-		// Values for 'class' and 'type' were already validated		
+		// 'view' was already checked before.
 		if(empty($sTemplateName) == true) {
 			throw new ApplicationException(Dict::Format('UI:Error:1ParametersMissing', 'template'));
 		}
 		
 		// 2.7: Don't use utils::GetCurrentModuleDir(0).
 		// When new reports are added with a different extension/module, it should return that path instead.
-		$sCurrentModuleDir = utils::GetAbsoluteModulePath(utils::ReadParam('reportdir', '', 'string'));
-		$sReportDir = $sCurrentModuleDir.'reports/templates/'.$sClassName.'/'.$sView;
-		$sReportFile = $sReportDir.'/'.$sTemplateName;
+		$sReportModuleDir = utils::GetAbsoluteModulePath(utils::ReadParam('reportdir', '', 'string'));
+
+		// Modern: Actually use the template name.
+		$sReportFile = $sReportModuleDir.$sTemplateName;
+
+		// Legacy behavior: Automatically build the report from the class name and provided 'view'.
+		$sReportFileAlternative = $sReportModuleDir.'reports/templates/'.$sClassName.'/'.$sView.'/'.$sTemplateName;
+
+		if(file_exists($sReportFile) == false && file_exists($sReportFileAlternative) == true) {
+			ReportGeneratorHelper::Trace('Deprecated: Legacy mode for file name: '.$sReportFileAlternative);
+			$sReportFile = $sReportFileAlternative;
+		}
+		else {
+			ReportGeneratorHelper::Trace('Template does not exist: '.$sReportFile.' / Alternative: '.$sReportFileAlternative);
+			throw new ApplicationException('Template does not exist.');
+		}
 		
 		// Prevent local file inclusion
 		// Mind: needs extra escaping!
 		if(!preg_match('/^[A-Za-z0-9\-_\\\\\/\:]{1,}\.[A-Za-z0-9]{1,}$/', $sTemplateName)) {
-			throw new ApplicationException('Potential disallowed local file inclusion: "'.$sReportFile.'"');
-		}
-		elseif(file_exists($sReportFile) == false) {
-			throw new ApplicationException('Template does not exist: '.$sReportFile);
+			ReportGeneratorHelper::Trace('Potential local file inclusion: '.$sReportFile);
+			throw new ApplicationException('Potential local file inclusion detected (LFI). This path is not allowed: "'.$sReportFile.'"');
 		}
 		
 		$sReportFile = str_replace(APPROOT.'env-'.utils::GetCurrentEnvironment().'/', '', $sReportFile);
@@ -935,7 +947,12 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		$oTwigEnv = new \Twig\Environment($loader, [
 			'autoescape' => false,
 			'cache' => false // No cache is default; but enforce!
-		]); 
+		]);
+
+		$oTwigEnv->addFilter(new \Twig\TwigFilter('make_object_url', function ($sObjClass, $sObjKey) {
+				return ApplicationContext::MakeObjectUrl($sObjClass, $sObjKey);
+			})
+		);
 
 		// Combodo uses this filter, so let's use it the same way for our report generator
 		$oTwigEnv->addFilter(new \Twig\TwigFilter('dict_s', function ($sStringCode, $sDefault = null, $bUserLanguageOnly = false) {

@@ -66,7 +66,7 @@ PHP
 
 ## Documentation
 
-See [Documentation](documentation.md)
+See [Documentation](docs/main.md)
 
 ## Professional support
 
