@@ -1,9 +1,9 @@
 <?php
 
 /**
- * @copyright   Copyright (c) 2019-2023 Jeffrey Bostoen
+ * @copyright   Copyright (c) 2019-2024 Jeffrey Bostoen
  * @license     https://www.gnu.org/licenses/gpl-3.0.en.html
- * @version     2.7.231105
+ * @version     2.7.240425
  *
  * Definition of class ReportProcessorParent. Parent Report Tool (ReportProcessor) to expand upon.
  */
@@ -33,6 +33,9 @@ use \utils;
 
 // Spatie BrowserShot
 use \Spatie\Browsershot\Browsershot;
+
+// chillerlan/php-qrccode
+use \chillerlan\QRCode\Output\QROutputInterface;
 
 /**
  * Abstract class ReportGeneratorHelper. Helper functions.
@@ -80,23 +83,25 @@ abstract class ReportGeneratorHelper {
 	}
 	
 	/**
-	 * Returns array (similar to REST/JSON) from object set
+	 * Returns an array (similar to REST/JSON) from an iTop object set.
 	 *
-	 * @param \CMDBObjectSet $oObjectSet iTop object set
+	 * @param \DBObjectSet $oObjectSet iTop object set.
 	 *
-	 * @return Array
+	 * @return \Array Each key is 'Class::ID' (the class being the common ancestor of the object set), with the value being an array (REST/JSON API structure).
 	 */
-	public static function ObjectSetToArray(CMDBObjectSet $oObjectSet) {
+	public static function ObjectSetToArray(DBObjectSet $oObjectSet) {
 		
 		$aResult = [];
 		
 		$aShowFields = [];
+		$sClass = $oObjectSet->GetClass();
+
 		foreach(MetaModel::ListAttributeDefs($oObjectSet->GetClass()) as $sAttCode => $oAttDef) {
-			$aShowFields[$oObjectSet->GetClass()][] = $sAttCode;
+			$aShowFields[$sClass][] = $sAttCode;
 		}
 		
 		while($oObject = $oObjectSet->Fetch()) {
-			$aResult[] = static::ObjectToArray($oObject, $aShowFields);
+			$aResult[$sClass.'::'.$oObject->GetKey()] = static::ObjectToArray($oObject, $aShowFields);
 		}
 		
 		return $aResult;
@@ -109,11 +114,8 @@ abstract class ReportGeneratorHelper {
 	 * @param \DBObject $oObject iTop object.
 	 * @param \String[] $aShowFields List of attribute codes to return. If not specified, all values of each attribute code will returned.
 	 *
-	 * @return Array JSON structure
+	 * @return \Array REST/JSON API structure.
 	 *
-	 * @details 
-	 * Strangely enough ObjectSetToArray takes a CMDBObjectSet, for instance of Attachments.
-	 * However on processing them, it turns into a DBObject?
 	 *
 	 */
 	public static function ObjectToArray(DBObject $oObject, $aShowFields = null) {
@@ -920,13 +922,17 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		// Legacy behavior: Automatically build the report from the class name and provided 'view'.
 		$sReportFileAlternative = $sReportModuleDir.'reports/templates/'.$sClassName.'/'.$sView.'/'.$sTemplateName;
 
-		if(file_exists($sReportFile) == false && file_exists($sReportFileAlternative) == true) {
-			ReportGeneratorHelper::Trace('Deprecated: Legacy mode for file name: '.$sReportFileAlternative);
-			$sReportFile = $sReportFileAlternative;
-		}
-		else {
-			ReportGeneratorHelper::Trace('Template does not exist: '.$sReportFile.' / Alternative: '.$sReportFileAlternative);
-			throw new ApplicationException('Template does not exist.');
+		if(file_exists($sReportFile) == false) {
+			
+			if(file_exists($sReportFileAlternative) == true) {
+				ReportGeneratorHelper::Trace('Deprecated: Legacy mode for file name: '.$sReportFileAlternative);
+				$sReportFile = $sReportFileAlternative;
+			}
+			else {
+				ReportGeneratorHelper::Trace('Template does not exist: '.$sReportFile.' / Alternative: '.$sReportFileAlternative);
+				throw new ApplicationException('Template does not exist.');
+			}
+
 		}
 		
 		// Prevent local file inclusion
@@ -970,7 +976,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		]);
 
 		$oTwigEnv->addFilter(new \Twig\TwigFilter('make_object_url', function ($sObjClass, $sObjKey) {
-				return ApplicationContext::MakeObjectUrl($sObjClass, $sObjKey);
+				return ApplicationContext::MakeObjectUrl($sObjClass, $sObjKey, null, false);
 			})
 		);
 
@@ -995,6 +1001,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 						// 'outputType' => \chillerlan\QRCode\QRCode::OUTPUT_MARKUP_SVG,
 						// 'outputType' => \chillerlan\QRCode\Output\QROutputInterface::GDIMAGE_PNG, // SVG is not rendered with wkhtmltopdf 0.12.5 (with patched qt) 
 						'eccLevel'   => \chillerlan\QRCode\Common\EccLevel::L,
+						'outputType' => QROutputInterface::GDIMAGE_PNG,
 						'scale'		 => 3 // Note: scale is for SVG, IMAGE_*. output. Irrelevant for HTML output; use CSS
 					]);
 
