@@ -12,9 +12,6 @@ namespace jb_itop_extensions\report_generator;
 
 use \jb_itop_extensions\report_generator\ReportGeneratorHelper;
 
-// Internals
-use \ReflectionClass;
-
 // iTop internals
 use \DBOBject;
 use \DBObjectSet;
@@ -48,48 +45,43 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 	
 		if($iMenuId == static::MENU_OBJDETAILS_ACTIONS) {
 		  
-			/** @var \DBObject $oObject iTop object of which details are being displayed */
-			$oObject = $param;
+			/** @var \DBObject $param iTop object of which details are being displayed */
+			ReportGeneratorHelper::SetObjectSet(DBObjectSet::FromObject($param));
+
+			// Process templates.
+			ReportGeneratorHelper::SetView('details');
+			static::GetReports();
 			
-			// Process templates
-			static::GetReports(DBObjectSet::FromObject($oObject), 'details');
-			
-			return static::$menu_items;
 		
 		}
 		elseif($iMenuId == static::MENU_OBJLIST_ACTIONS) {
 			
-			/** @var \DBObjectSet $oObjectSet Set of iTop objects which are being displayed in a list */
-			$oObjectSet = $param;
+			/** @var \DBObjectSet $param Set of iTop objects which are being displayed in a list */
+			ReportGeneratorHelper::SetObjectSet($param);
+
+			// Process templates.
+			ReportGeneratorHelper::SetView('list');
+			static::GetReports('list');
 			
-			// There should be items in the set.
-			if($oObjectSet->Count() > 0) {
-				
-				// Process templates
-				static::GetReports($oObjectSet, 'list');
-				
-				return static::$menu_items;
-				  
-			} 
+
 		} 
 		
 		// Always expects an array as result.
-		return [];
+		return static::$menu_items;
 		  
 	}
 	 
 	/**
 	 * Gets data from the templates, such as title and whether or not to use a separate button.
 	 *
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 * @param \String $sView The view ('details' or 'list')
-	 *
 	 * @return void
 	 * 
 	 * @uses \PopupMenuExtension_ReportGenerator::menu_items
 	 * @uses \PopupMenuExtension_ReportGenerator::shortcut_actions
 	 */
-	public static function GetReports(DBObjectSet $oSet_Objects, $sView) {
+	public static function GetReports() {
+
+		$sView = ReportGeneratorHelper::GetView();
 		
 		// Menu items
 		static::$menu_items = [];
@@ -110,10 +102,13 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 		usort($aReports, function($sClassNameA, $sClassNameB) {
 			return $sClassNameA::GetPrecedence() <=> $sClassNameB::GetPrecedence();
 		});
-		
+
+		/** @var \DBObjectSet|null $oSet_Objects Object set. */
+		$oSet_Objects = ReportGeneratorHelper::GetObjectSet();
+
 		foreach($aReports as $sReport) {
 			
-			if($sReport::IsApplicable($oSet_Objects, $sView) == true) {
+			if($sReport::IsApplicable() == true) {
 		
 				// UID must simply be unique.Keep alphanumerical version of filename.
 				$sUID = ReportGeneratorHelper::MODULE_CODE.'_'.preg_replace('/[^\dA-Za-z_-]/i', '', $sReport).'_'.rand(0, 10000);
@@ -121,24 +116,23 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 				// Add shortcut (button) or keep menu item?
 				static::$shortcut_actions .= ($sReport::ForceButton() == true ? ','.$sUID : '');
 				
-				// Parameters
-				$aParameters = [];
-				if(isset($aReportSettings['parameters']) == true) {
-					$aParameters = $aReportSettings['parameters'];
-				}
-				
-				
-				// URL should pass location of the report (folder/report) and the OQL query for the object(s)
+				// URL should pass location of the report (folder/report) and the OQL query for the object(s).
 				$sURL = utils::GetAbsoluteUrlExecPage().'?'.
 					'&exec_module='.ReportGeneratorHelper::MODULE_CODE.
 					'&exec_page=reporting.php'.
 					'&exec_env='.utils::GetCurrentEnvironment().
 					'&view='.$sView.
-					(count($sReport::GetURLParameters($oSet_Objects, $sView)) > 0 ? '&'.http_build_query($sReport::GetURLParameters($oSet_Objects, $sView)) : '').
-					'&filter='.urlencode(htmlentities($oSet_Objects->GetFilter()->Serialize(), ENT_QUOTES, 'UTF-8'))
+					(count($sReport::GetURLParameters()) > 0 ? '&'.http_build_query($sReport::GetURLParameters()) : '')
 				;
+
+				// Only if a filter was set:
+				if($oSet_Objects !== null) {
+
+					$sURL .= '&filter='.urlencode(htmlentities($oSet_Objects->GetFilter()->Serialize(), ENT_QUOTES, 'UTF-8'));
+
+				}
 					
-				static::$menu_items[] = new URLPopupMenuItem($sUID, $sReport::GetTitle($oSet_Objects, $sView), $sURL, $sReport::GetTarget());
+				static::$menu_items[] = new URLPopupMenuItem($sUID, $sReport::GetTitle(), $sURL, $sReport::GetTarget());
 				
 			}
 			

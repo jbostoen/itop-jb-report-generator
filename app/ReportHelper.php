@@ -10,10 +10,8 @@
 
 namespace jb_itop_extensions\report_generator;
 
-use \Exception;
-
 // Generic
-use \ReflectionClass;
+use \Exception;
 
 // iTop internals
 use \ApplicationContext;
@@ -38,7 +36,8 @@ use \Spatie\Browsershot\Browsershot;
 use \chillerlan\QRCode\Output\QROutputInterface;
 
 /**
- * Abstract class ReportGeneratorHelper. Helper functions.
+ * Abstract class ReportGeneratorHelper.  
+ * Helper functions.
  */
 abstract class ReportGeneratorHelper {
 	
@@ -60,7 +59,9 @@ abstract class ReportGeneratorHelper {
 
 	/** @var \String Trace ID. */
 	private static $sTraceId = '';
-	
+
+	/** @var \String View: 'details' or 'list'. */
+	private static $sView = '';
 
 	/**
 	 * @var \DBObjectSet|null $oSet_Objects;
@@ -154,31 +155,33 @@ abstract class ReportGeneratorHelper {
 	 * Executes the reporting.
 	 *
 	 * @param \String $sFilter OQL filter
-	 * @param \String $sView Current view where the method was triggered from: 'list', 'details'
 	 *
 	 * @return void
 	 */
-	public static function DoExec($oFilter, $sView) {
+	public static function DoExec() {
 		
 		static::ClearHeaders();
 		static::ClearOutput();
+
 	
 		// $aAllArgs = \MetaModel::PrepareQueryArguments($oFilter->GetInternalParams());
 		// $oFilter->ApplyParameters($aAllArgs); // Thought this was necessary for :current_contact_id. Guess not?
-		$oSet_Objects = new CMDBObjectSet($oFilter);
+
+		ReportGeneratorHelper::SetObjectSetFromFilter();
 		
-		$sClassName = $oFilter->GetClass();
-		
-		static::SetObjectSet($oSet_Objects);
-		
-		$aSet_Objects = static::ObjectSetToArray($oSet_Objects);
-		
-		if($sView == 'details') {
-			$aReportData['item'] = array_values($aSet_Objects)[0];
+		if(static::$oSet_Objects !== null) {
+			
+			$aSet_Objects = static::ObjectSetToArray(static::$oSet_Objects);
+			
+			if(static::GetView() == 'details') {
+				$aReportData['item'] = array_values($aSet_Objects)[0];
+			}
+			else {
+				$aReportData['items'] = $aSet_Objects;
+			}
+
 		}
-		else {
-			$aReportData['items'] = $aSet_Objects;
-		}
+
 		
 		// Expose some variables so they can be used in reports
 		$aReportData['current_contact'] = static::ObjectToArray(UserRights::GetUserObject());
@@ -204,12 +207,9 @@ abstract class ReportGeneratorHelper {
 		// Enrich first
 		foreach($aReportProcessors as $sClassName) {
 
-			$oSet_Objects->Rewind();
-			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
+			if($sClassName::IsApplicable() == true) {
 				
-				// Quick reset, so it doesn't need to be taken care of each time in the DoExec() method.
-				$oSet_Objects->Rewind();
-				$sClassName::EnrichData($aReportData, $oSet_Objects);
+				$sClassName::EnrichData($aReportData);
 
 			}
 
@@ -224,12 +224,9 @@ abstract class ReportGeneratorHelper {
 		// Execute each ReportProcessor
 		foreach($aReportProcessors as $sClassName) {
 			
-			$oSet_Objects->Rewind();
-			if($sClassName::IsApplicable($oSet_Objects, $sView) == true) {
+			if($sClassName::IsApplicable() == true) {
 
-				// Quick reset, so it doesn't need to be taken care of each time in the DoExec() method.
-				$oSet_Objects->Rewind();
-				$sClassName::DoExec($aReportData, $oSet_Objects);
+				$sClassName::DoExec($aReportData);
 
 			}
 			
@@ -245,16 +242,34 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Sets iTop objects set (currently being processed).
 	 *
-	 * @param \DBObjectSet $oSet_Objects iTop object set.
+	 * @param \DBObjectSet $oSet_Objects A set of iTop objects.
 	 *
 	 * @return void
 	 */
-	public static function SetObjectSet(DBObjectSet $oSet_Objects) {
-		
+	public static function SetObjectSet($oSet_Objects) {
+
 		static::$oSet_Objects = $oSet_Objects;
 		
 	}
 	
+	/**
+	 * Sets iTop objects set (currently being processed).
+	 *
+	 * @return void
+	 */
+	public static function SetObjectSetFromFilter() {
+
+		$sFilter = utils::ReadParam('filter', '', false, 'raw_data');
+		
+		if($sFilter !== '') {
+				
+			$oFilter = DBObjectSearch::unserialize($sFilter);
+			static::$oSet_Objects = new DBObjectSet($oFilter);
+
+		}
+		
+	}
+
 	/**
 	 * Gets iTop object set (currently being processed).
 	 *
@@ -262,6 +277,11 @@ abstract class ReportGeneratorHelper {
 	 */
 	public static function GetObjectSet() {
 		
+		// Rewind if there is a DBObjectSet.
+		if(static::$oSet_Objects !== null) {
+			static::$oSet_Objects->Rewind();
+		}
+
 		return static::$oSet_Objects;
 		
 	}
@@ -437,6 +457,32 @@ abstract class ReportGeneratorHelper {
 		
 	}
 	
+	/**
+	 * Set view.
+	 *
+	 * @param string $sView The view. 'details' or 'list'. Other values can be set, but don't have any meaning.
+	 * 
+	 * @return void
+	 */
+	public static function SetView($sView) {
+
+		static::$sView = $sView;
+
+	}
+	
+	/**
+	 * Get view.  
+	 * Returns the value of the "view" URL parameter ('list', 'details').
+	 *
+	 * @return void
+	 */
+	public static function GetView() {
+		
+		return static::$sView;
+
+	}
+
+
 }
 
 /**
@@ -447,32 +493,28 @@ interface iReportProcessor {
 	
 	/**
 	 * Whether or not this extension is applicable
-	 * 
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 * @param \String $sView View. 'details', 'list'
 	 *
 	 * @return \Boolean
-	 *
 	 */
-	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView);
+	public static function IsApplicable();
 	
 	/**
-	 * Rendering hook
+	 * Hook to enrich the report data.
 	 *
-	 * @param \Array $aReportData Twig data
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \Array $aReportData Report data.
+	 * 
+	 * @return void
 	 *
 	 */
-	public static function EnrichData(&$aReportData, DBObjectSet $oSet_Objects);
+	public static function EnrichData(&$aReportData);
 	
 	/**
-	 * Action hook
+	 * Action hook.
 	 *
-	 * @param \Array $aReportData Report data
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
+	 * @param \Array $aReportData Report data.
 	 *
 	 */
-	public static function DoExec($aReportData, DBObjectSet $oSet_Objects);
+	public static function DoExec($aReportData);
 
 }
 
@@ -507,39 +549,30 @@ interface iReportUIElement {
 	public static function GetTarget();
 	
 	/**
-	 * Title of the menu item or button
-	 *
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 * @param \String $sView View: 'details' or 'list'
+	 * Title of the menu item or button.
 	 * 
 	 * @return \String
 	 *
 	 * @details Hint: you can use Dict::S('...')
 	 *
 	 */
-	public static function GetTitle(DBObjectSet $oSet_Objects, $sView);
+	public static function GetTitle();
 	
 	/**
-	 * URL Parameters
-	 *
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 * @param \String $sView View: 'details' or 'list'
+	 * URL Parameters.
 	 * 
 	 * @return \Array
 	 */
-	public static function GetURLParameters(DBObjectSet $oSet_Objects, $sView);
+	public static function GetURLParameters();
 	
 	
 	/**
-	 * Whether or not this extension is applicable
-	 *
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 * @param \String $sView View: 'details' or 'list'
+	 * Whether or not this extension is applicable.
 	 *
 	 * @return \Boolean
 	 *
 	 */
-	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView);
+	public static function IsApplicable();
 	
 }
 
@@ -559,63 +592,37 @@ abstract class AbstractReportUIElement implements iReportUIElement {
 	}
 	
 	/**
-	 * Returns the precedence (order. Low = first, high = later)
-	 *
-	 * @return \Float
-	 *
+	 * @inheritDoc
 	 */
 	public static function GetPrecedence() {
 		return 100;
 	}
 	
 	/**
-	 * Gets the HTML target. Uusally '_blank' or '_self'
-	 *
-	 * @return \String
-	 *
+	 * @inheritDoc
 	 */
 	public static function GetTarget() {
 		return '_blank';
 	}
 	
 	/**
-	 * Title of the menu item or button
-	 *
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 * @param \String $sView View: 'details' or 'list'
-	 * 
-	 * @return \String
-	 *
-	 * @details Hint: you can use Dict::S('...')
-	 *
+	 * @inheritDoc
 	 */
-	public static function GetTitle(DBObjectSet $oSet_Objects, $sView) {
+	public static function GetTitle() {
 		return '';
 	}
 	
 	/**
-	 * URL Parameters. Often 'template' or additional parameters for extended iReportProcessor implementations.
-	 *
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 * @param \String $sView View: 'details' or 'list'
-	 * 
-	 * @return \Array
+	 * @inheritDoc
 	 */
-	public static function GetURLParameters(DBObjectSet $oSet_Objects, $sView) {
+	public static function GetURLParameters() {
 		return [];
 	}
 	
-	
 	/**
-	 * Whether or not this extension is applicable
-	 *
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 * @param \String $sView View: 'details' or 'list'
-	 *
-	 * @return \Boolean
-	 *
+	 * @inheritDoc
 	 */
-	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
+	public static function IsApplicable() {
 		return false;
 	}
 	
@@ -639,51 +646,35 @@ abstract class ReportProcessorParent implements iReportProcessor {
 	}
 	
 	/**
-	 * Whether or not this extension is applicable
-	 *
-	 * @param \DBObjectSet $oSet_Objects CMDBObjectSet of iTop objects which are being processed
-	 * @param \String $sView View. 'details', 'list'
-	 * *
-	 * @return \Boolean
-	 *
+	 * @inheritDoc
 	 */
-	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
+	public static function IsApplicable() {
 		
 		// This parent class should not be applicable.
 		return false;
 		
 	}
-	
+
 	/**
-	 * Rendering hook. Can enrich report data (fetching additional info).
-	 *
-	 * @param \Array $aReportData Report data
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 *
-	 * @return void
+	 * @inheritDoc
 	 */
-	public static function EnrichData(&$aReportData, DBObjectSet $oSet_Objects) {
+	public static function EnrichData(&$aReportData) {
 		
-		// Enrich data
+		// Enrich data.
 		
 	}
 	
 	/**
-	 * Action hook
-	 *
-	 * @param \Array $aReportData Report data
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 *
-	 * @return void
+	 * @inheritDoc
 	 */
-	public static function DoExec($aReportData, DBObjectSet $oSet_Objects) {
+	public static function DoExec($aReportData) {
 		
-		// Do stuff
+		// Do stuff.
 		
 	}
 	
 	/**
-	 * Outputs error (from Exception)
+	 * Outputs error (from Exception).
 	 *
 	 * @param \Exception $e Exception
 	 *
@@ -727,10 +718,10 @@ abstract class ReportProcessorAttachments extends ReportProcessorParent  {
 	/**
 	 * @inheritDoc
 	 *
-	 * @details This is an attempt for backward compatibility as of 21st of December, 2023.
+	 * This is an attempt for backward compatibility as of 21st of December, 2023.
 	 *
 	 */
-	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
+	public static function IsApplicable() {
 		
 		// Always applicable when no action is specified.
 		$sAction = utils::ReadParam('action', '', false, 'string');
@@ -762,8 +753,11 @@ abstract class ReportProcessorAttachments extends ReportProcessorParent  {
 	/**
 	 * @inheritDoc
 	 */
-	public static function EnrichData(&$aReportData, DBObjectSet $oSet_Objects) {
+	public static function EnrichData(&$aReportData) {
 		
+		/** @var \DBObjectSet|null $oSet_Objects iTop objects. */
+		$oSet_Objects = ReportGeneratorHelper::GetObjectSet();
+
 		// Get keys to build one OQL Query
 		$aKeys = [ -1];
 		
@@ -811,14 +805,15 @@ abstract class ReportProcessorAttachments extends ReportProcessorParent  {
 
 
 /**
- * Class ReportProcessorTwig. Renders a report with basic object details using Twig.
+ * Class ReportProcessorTwig.  
+ * Renders a report with basic object details using Twig.
  */
 abstract class ReportProcessorTwig extends ReportProcessorParent {
 		
 	/**
 	 * @inheritDoc
 	 */
-	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
+	public static function IsApplicable() {
 		
 		// Always applicable when no action is specified.
 		$sAction = utils::ReadParam('action', '', false, 'string');
@@ -829,7 +824,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 	/**
 	 * @inheritDoc
 	 */
-	public static function EnrichData(&$aReportData, DBObjectSet $oSet_Objects) {
+	public static function EnrichData(&$aReportData) {
 		
 		// @todo This extension was created for iTop 2.7. In the meanwhile, some methods are exposed natively in iTop 3.0
 		
@@ -846,6 +841,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		
 		// CSS
 		$aReportData['lib']['bootstrap']['css'] = $sModuleUrl.'/vendor/twbs/bootstrap/dist/css/bootstrap.min.css';
+		$aReportData['lib']['fontawesome']['css'] = $sModuleUrl.'/vendor/components/font-awesome/css/all.min.css';
 		
 		// Request
 		$aReportData['request'] = $_REQUEST;
@@ -855,7 +851,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 	/**
 	 * @inheritDoc
 	 */
-	public static function DoExec($aReportData, DBObjectSet $oSet_Objects) {
+	public static function DoExec($aReportData) {
 		
 		try {
 		
@@ -900,12 +896,9 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 	 */
 	public static function GetReportFileName() {
 		
-		$oSet_Objects = ReportGeneratorHelper::GetObjectSet();
+		$sView = ReportGeneratorHelper::GetView();
 
-		$sClassName = $oSet_Objects->GetClass();
-		$sView = utils::ReadParam('view', '', false, 'string');
 		$sTemplateName = utils::ReadParam('template', '', false, 'string');
-		$sReport = 'jb_itop_extensions\\report_generator\\'.utils::ReadParam('report', '', false, 'string');
 		
 		// 'view' was already checked before.
 		if(empty($sTemplateName) == true) {
@@ -919,18 +912,28 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		// Modern: Actually use the template name.
 		$sReportFile = $sReportModuleDir.$sTemplateName;
 
-		// Legacy behavior: Automatically build the report from the class name and provided 'view'.
-		$sReportFileAlternative = $sReportModuleDir.'reports/templates/'.$sClassName.'/'.$sView.'/'.$sTemplateName;
 
 		if(file_exists($sReportFile) == false) {
 			
-			if(file_exists($sReportFileAlternative) == true) {
-				ReportGeneratorHelper::Trace('Deprecated: Legacy mode for file name: '.$sReportFileAlternative);
-				$sReportFile = $sReportFileAlternative;
-			}
-			else {
-				ReportGeneratorHelper::Trace('Template does not exist: '.$sReportFile.' / Alternative: '.$sReportFileAlternative);
-				throw new ApplicationException('Template does not exist.');
+			/** @var \DBObjectSet|null $oSet_Objects */
+			$oSet_Objects = ReportGeneratorHelper::GetObjectSet();
+
+			if($oSet_Objects !== null) {
+
+				$sClassName = $oSet_Objects->GetClass();
+			
+				// Legacy behavior: Automatically build the report from the class name and provided 'view'.
+				$sReportFileAlternative = $sReportModuleDir.'reports/templates/'.$sClassName.'/'.$sView.'/'.$sTemplateName;
+				
+				if(file_exists($sReportFileAlternative) == true) {
+					ReportGeneratorHelper::Trace('Deprecated: Legacy mode for file name: '.$sReportFileAlternative);
+					$sReportFile = $sReportFileAlternative;
+				}
+				else {
+					ReportGeneratorHelper::Trace('Template does not exist: '.$sReportFile.' / Alternative: '.$sReportFileAlternative);
+					throw new ApplicationException('Template does not exist.');
+				}
+
 			}
 
 		}
@@ -998,8 +1001,6 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 
 					$aOptions = new \chillerlan\QRCode\QROptions([
 						'version'    => 5,
-						// 'outputType' => \chillerlan\QRCode\QRCode::OUTPUT_MARKUP_SVG,
-						// 'outputType' => \chillerlan\QRCode\Output\QROutputInterface::GDIMAGE_PNG, // SVG is not rendered with wkhtmltopdf 0.12.5 (with patched qt) 
 						'eccLevel'   => \chillerlan\QRCode\Common\EccLevel::L,
 						'outputType' => QROutputInterface::GDIMAGE_PNG,
 						'scale'		 => 3 // Note: scale is for SVG, IMAGE_*. output. Irrelevant for HTML output; use CSS
@@ -1051,7 +1052,7 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 	 * @return \Boolean
 	 *
 	 */
-	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
+	public static function IsApplicable() {
 		
 		$sAction = utils::ReadParam('action', '', false, 'string');
 		return (in_array($sAction, ['download_pdf', 'show_pdf', 'attach_pdf']) == true);
@@ -1064,9 +1065,12 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 	 * @return void
 	 *
 	 */
-	public static function DoExec($aReportData, DBObjectSet $oSet_Objects) {
+	public static function DoExec($aReportData) {
 		
 		try {
+			
+			/** @var \DBObjectSet|null $oSet_Objects iTop objects. */
+			$oSet_Objects = ReportGeneratorHelper::GetObjectSet();
 			
 			/** @var \Spatie\Browsershot\Browsershot $oPDF PDF Object */
 			$sBase64 = static::GetPDFObject($aReportData);
@@ -1285,6 +1289,5 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 		}
 		
 	}
-	
 	
 }

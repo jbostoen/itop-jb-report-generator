@@ -25,14 +25,17 @@
 
 namespace jb_itop_extensions\report_generator;
 
+// iTop internals.
 use \ApplicationException;
 use \DBObjectSearch;
 use \Dict;
 use \LoginWebPage;
-// use \MetaModel;
 use \NiceWebPage;
 use \SecurityException;
 use \utils;
+
+// Generic.
+use \Exception;
 
 
 		
@@ -68,29 +71,11 @@ use \utils;
 		if(LoginWebPage::EXIT_CODE_OK != LoginWebPage::DoLoginEx(null /* any portal */, false, LoginWebPage::EXIT_RETURN)) {
 			throw new SecurityException('You must be logged in');
 		}
+
+		// Okay if this is emmpty.
+		ReportGeneratorHelper::SetView(utils::ReadParam('view', '', false, 'string'));
 		
-		$sView = utils::ReadParam('view', '', false, 'string');
-		$sFilter = utils::ReadParam('filter', '', false, 'raw_data');
-		
-		// Validation
-		// --
-		
-		// Check if right parameters have been given
-		if(empty($sFilter) == true) {
-			throw new ApplicationException(Dict::Format('UI:Error:1ParametersMissing', 'filter'));
-		}
-		
-		if(empty($sView) == true) {
-			throw new ApplicationException(Dict::Format('UI:Error:1ParametersMissing', 'view'));
-		}
-		
-		// Valid type?
-		if(in_array($sView, ['details', 'list']) == false) {
-			throw new ApplicationException('Valid values for view are: details, list');
-		}
-		
-		$oFilter = DBObjectSearch::unserialize($sFilter);
-		ReportGeneratorHelper::DoExec($oFilter, $sView);
+		ReportGeneratorHelper::DoExec();
 		
 		// If needed (most likely exited by now):
 		set_time_limit($iOriginalTimeLimit);

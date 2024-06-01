@@ -1,6 +1,6 @@
 # Implementing reports
 
-* [Creating reports](reports/creatingreports.md)
+* [Creating reports](reports/creating_reports.md)
 * [Dashlet](reports/dashlet.md)
 * [Enabling PDF support](reports/pdfsupport/main.md)
 * [Requirements](requirements.md)
