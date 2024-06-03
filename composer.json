@@ -2,9 +2,9 @@
     "require": {
         "twig/twig": "^3.",
         "chillerlan/php-qrcode": "^5.",
-        "spatie/browsershot": "^3.",
+        "spatie/browsershot": "^4.",
         "components/jquery": "^3.",
         "twbs/bootstrap": "^5.",
-        "components/font-awesome": "^6.5"
+        "components/font-awesome": "^6."
     }
 }

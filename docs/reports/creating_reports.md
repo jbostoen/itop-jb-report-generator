@@ -134,7 +134,14 @@ Attachments are also available for each item.
 
 The following variables are available to use in the reports:
 
+**iTop**
+
+* ```itop.env```: iTop environment.
+* ```itop.reporting_url```: The URL pointing to the "reporting.php" file; containing the default parameters.
 * ```itop.root_url```: iTop root URL.
+
+**Popular frameworks**
+
 * ```lib.bootstrap.css```: URL to CSS for Twitter BootStrap.
 * ```lib.bootstrap.js```: URL to JavaScript for Twitter BootStrap.
 * ```lib.jquery.js```: URL to JavaScript for jQuery.

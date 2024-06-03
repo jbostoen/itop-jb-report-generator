@@ -829,8 +829,12 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 		// @todo This extension was created for iTop 2.7. In the meanwhile, some methods are exposed natively in iTop 3.0
 		
 		// Enrich data with iTop setting (remove trailing /)
-		$aReportData['itop']['root_url'] = substr(utils::GetAbsoluteUrlAppRoot(), 0, -1);
+		$aReportData['itop']['root_url'] = trim(utils::GetAbsoluteUrlAppRoot(), '/');
 		$aReportData['itop']['env'] = utils::GetCurrentEnvironment();
+		$aReportData['itop']['report_url'] = utils::GetAbsoluteUrlAppRoot().'pages/exec.php?'.
+			'&exec_module='.ReportGeneratorHelper::MODULE_CODE.
+			'&exec_page=reporting.php'.
+			'&exec_env='.utils::GetCurrentEnvironment();
 		
 		// Enrich with common libraries
 		$sModuleUrl = utils::GetCurrentModuleUrl();
