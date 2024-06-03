@@ -900,7 +900,6 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 
 		$sTemplateName = utils::ReadParam('template', '', false, 'string');
 		
-		// 'view' was already checked before.
 		if(empty($sTemplateName) == true) {
 			throw new ApplicationException(Dict::Format('UI:Error:1ParametersMissing', 'template'));
 		}
@@ -1289,5 +1288,6 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 		}
 		
 	}
+
 	
 }
