@@ -1200,7 +1200,12 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 					->waitForFunction("function() { if(typeof window.ReportComplete != 'function') { return true; } else { return window.ReportComplete() } }", null, ($iTimeout * 1000) -1) // function, polling, timeout. Mind that the timeout should be less than the default timeout
 					->timeout($iTimeout) // seconds
 
-					
+					// With Pass GenerateDocumentOutline through new headless (in Chrome 126.0.6450.0 and later) 
+					// things like chrome --headless=new --print-to-pdf --no-pdf-header-footer --generate-pdf-document-outline=true now work and emit a document outline. 
+					// Passing generateDocumentOutline: true through the Chrome Devtools Protocol also works (here in puppeteer exposed as outline: true).
+					->setOption('outline', true)
+					// For the above, the new headless mode is required.
+					->newHeadless()
 				;
 				
 				if($aBrowserShotSettings['ignore_https_errors'] == true) {
