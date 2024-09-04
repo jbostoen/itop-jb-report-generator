@@ -1197,7 +1197,7 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 					// ->setDelay(10 * 1000) // In milliseconds
 					
 					// Deliberately using double quotes here and inner quotes within
-					->waitForFunction("function() { if(typeof window.ReportComplete != 'function') { return true; } else { return window.ReportComplete() } }", null, ($iTimeout * 1000) -1) // function, polling, timeout. Mind that the timeout should be less than the default timeout
+					// ->waitForFunction("function() { if(typeof window.ReportComplete != 'function') { return true; } else { return window.ReportComplete() } }", null, ($iTimeout * 1000) -1) // function, polling, timeout. Mind that the timeout should be less than the default timeout
 					->timeout($iTimeout) // seconds
 
 					// With Pass GenerateDocumentOutline through new headless (in Chrome 126.0.6450.0 and later) 
