@@ -61,7 +61,7 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 
 			// Process templates.
 			ReportGeneratorHelper::SetView('list');
-			static::GetReports('list');
+			static::GetReports();
 			
 
 		} 

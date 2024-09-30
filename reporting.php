@@ -26,16 +26,14 @@
 namespace jb_itop_extensions\report_generator;
 
 // iTop internals.
-use \ApplicationException;
-use \DBObjectSearch;
-use \Dict;
-use \LoginWebPage;
-use \NiceWebPage;
-use \SecurityException;
-use \utils;
+use Dict;
+use LoginWebPage;
+use SecurityException;
+use utils;
+use Combodo\iTop\Application\WebPage\NiceWebPage;
 
 // Generic.
-use \Exception;
+use Exception;
 
 
 		
@@ -75,6 +73,10 @@ use \Exception;
 		// Okay if this is emmpty.
 		ReportGeneratorHelper::SetView(utils::ReadParam('view', '', false, 'string'));
 		
+		// Sets the object set.
+		ReportGeneratorHelper::SetObjectSetFromFilter();
+
+		// Execute the report.
 		ReportGeneratorHelper::DoExec();
 		
 		// If needed (most likely exited by now):
@@ -84,7 +86,6 @@ use \Exception;
 	}
 	catch(Exception $e) {
 		
-		require_once(APPROOT.'/application/nicewebpage.class.inc.php');
 		$oP = new NiceWebPage(Dict::S('UI:PageTitle:FatalError'));
 		$oP->add("<h1>".Dict::S('UI:FatalErrorMessage')."</h1>");	
 		$oP->add(Dict::Format('UI:Error_Details', $e->getMessage()));	

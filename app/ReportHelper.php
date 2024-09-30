@@ -14,26 +14,26 @@ namespace jb_itop_extensions\report_generator;
 use \Exception;
 
 // iTop internals
-use \ApplicationContext;
-use \ApplicationException;
-use \CMDBObjectSet;
-use \DBObject;
-use \DBObjectSearch;
-use \DBObjectSet;
-use \Dict;
-use \iTopStandardURLMaker;
-use \MetaModel;
-use \NiceWebPage;
-use \ormDocument;
-use \RestResultWithObjects;
-use \UserRights;
-use \utils;
+use ApplicationContext;
+use ApplicationException;
+use CMDBObjectSet;
+use Combodo\iTop\Application\WebPage\NiceWebPage;
+use DBObject;
+use DBObjectSearch;
+use DBObjectSet;
+use Dict;
+use iTopStandardURLMaker;
+use MetaModel;
+use ormDocument;
+use RestResultWithObjects;
+use UserRights;
+use utils;
 
 // Spatie BrowserShot
-use \Spatie\Browsershot\Browsershot;
+use Spatie\Browsershot\Browsershot;
 
 // chillerlan/php-qrccode
-use \chillerlan\QRCode\Output\QROutputInterface;
+use chillerlan\QRCode\Output\QROutputInterface;
 
 /**
  * Abstract class ReportGeneratorHelper.  
@@ -67,21 +67,6 @@ abstract class ReportGeneratorHelper {
 	 * @var \DBObjectSet|null $oSet_Objects;
 	 */
 	private static $oSet_Objects = null;
-	
-	/**
-	 * Checks whether iTop is 2.7 (LTS) = true or 3.0 or higher = false.
-	 *
-	 * @return \Boolean
-	 */
-	public static function IsLegacy() {
-
-		if(defined('ITOP_VERSION') == true && version_compare(ITOP_VERSION, '3.0', '>=')) {
-			return false;
-		}
-		
-		return true;
-		
-	}
 	
 	/**
 	 * Returns an array (similar to REST/JSON) from an iTop object set.
@@ -167,7 +152,6 @@ abstract class ReportGeneratorHelper {
 		// $aAllArgs = \MetaModel::PrepareQueryArguments($oFilter->GetInternalParams());
 		// $oFilter->ApplyParameters($aAllArgs); // Thought this was necessary for :current_contact_id. Guess not?
 
-		ReportGeneratorHelper::SetObjectSetFromFilter();
 		
 		if(static::$oSet_Objects !== null) {
 			
@@ -253,7 +237,8 @@ abstract class ReportGeneratorHelper {
 	}
 	
 	/**
-	 * Sets iTop objects set (currently being processed).
+	 * Sets iTop objects set (currently being processed).  
+	 * This will use the URL parameter "filter" to fetch the object set.
 	 *
 	 * @return void
 	 */
@@ -684,22 +669,8 @@ abstract class ReportProcessorParent implements iReportProcessor {
 		
 		ReportGeneratorHelper::Trace('Exception occurred: '.$e->GetMessage()); 
 		
-		if(ReportGeneratorHelper::IsLegacy() == true) {
-			
-			require_once(APPROOT.'/application/nicewebpage.class.inc.php');
-			$oP = new NiceWebPage(Dict::S('UI:PageTitle:FatalError'));
-			$oP->add("<h1>".Dict::S('UI:FatalErrorMessage')."</h1>\n");
-			$oP->add(Dict::Format('UI:Error_Details', $e->getMessage()));
-			$oP->output();
-			die();
-			
-		}
-		else {
-			
-			// Leads to bad things in iTop 3.0
-			die($e->getMessage());
-			
-		}
+		// Leads to bad things in iTop 3.0
+		die($e->getMessage());
 			
 	}
 	
