@@ -10,15 +10,15 @@
 
 namespace jb_itop_extensions\report_generator;
 
-use \jb_itop_extensions\report_generator\ReportGeneratorHelper;
+use jb_itop_extensions\report_generator\ReportGeneratorHelper;
 
 // iTop internals
-use \DBOBject;
-use \DBObjectSet;
-use \iPopupMenuExtension;
-use \MetaModel;
-use \URLPopupMenuItem;
-use \utils;
+use DBOBject;
+use DBObjectSet;
+use iPopupMenuExtension;
+use MetaModel;
+use URLPopupMenuItem;
+use utils;
 
 /**
  * Class PopupMenuExtension_ReportGenerator.
@@ -28,46 +28,52 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 	
 	
 	/**
-	 * @var \URLPopupMenuItem[] Array of \URLPopupMenuItem
+	 * @var array Hash table. Key = 'details' or 'list'; the value is an array of URLPopupMenuItem
 	 */
 	private static $menu_items = [];
 	
 	/**
-	 * @var \String Comma separated list of shortcut actions
+	 * @var string Comma separated list of shortcut actions
 	 */
 	private static $shortcut_actions = '';
 	
 	/**
-	 * @var \Integer $iMenuId Menu ID
-	 * @var \Object $param Parameter provided by iTop.
+	 * @var int $iMenuId Menu ID
+	 * @var object $param Parameter provided by iTop.
 	 */
 	public static function EnumItems($iMenuId, $param) {
 	
 		if($iMenuId == static::MENU_OBJDETAILS_ACTIONS) {
 		  
-			/** @var \DBObject $param iTop object of which details are being displayed */
+			/** @var DBObject $param iTop object of which details are being displayed. */
 			ReportGeneratorHelper::SetObjectSet(DBObjectSet::FromObject($param));
 
 			// Process templates.
 			ReportGeneratorHelper::SetView('details');
 			static::GetReports();
+
+			return static::$menu_items['details'];
 			
 		
 		}
 		elseif($iMenuId == static::MENU_OBJLIST_ACTIONS) {
 			
-			/** @var \DBObjectSet $param Set of iTop objects which are being displayed in a list */
+			/** @var DBObjectSet $param Set of iTop objects which are being displayed in a list. */
 			ReportGeneratorHelper::SetObjectSet($param);
 
 			// Process templates.
 			ReportGeneratorHelper::SetView('list');
 			static::GetReports();
+
+			return static::$menu_items['list'];
 			
 
 		} 
-		
-		// Always expects an array as result.
-		return static::$menu_items;
+		else {
+
+			return [];
+
+		}
 		  
 	}
 	 
@@ -75,16 +81,15 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 	 * Gets data from the templates, such as title and whether or not to use a separate button.
 	 *
 	 * @return void
-	 * 
-	 * @uses \PopupMenuExtension_ReportGenerator::menu_items
-	 * @uses \PopupMenuExtension_ReportGenerator::shortcut_actions
 	 */
 	public static function GetReports() {
 
 		$sView = ReportGeneratorHelper::GetView();
+
+		// Proper init.
+		static::$menu_items[$sView] = [];
 		
-		// Menu items
-		static::$menu_items = [];
+		// Menu items which should be shown as buttons.
 		static::$shortcut_actions = MetaModel::GetConfig()->Get('shortcut_actions');
 		
 		// Process all policies
@@ -103,7 +108,7 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 			return $sClassNameA::GetPrecedence() <=> $sClassNameB::GetPrecedence();
 		});
 
-		/** @var \DBObjectSet|null $oSet_Objects Object set. */
+		/** @var DBObjectSet|null $oSet_Objects Object set. */
 		$oSet_Objects = ReportGeneratorHelper::GetObjectSet();
 
 		foreach($aReports as $sReport) {
@@ -132,7 +137,7 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 
 				}
 					
-				static::$menu_items[] = new URLPopupMenuItem($sUID, $sReport::GetTitle(), $sURL, $sReport::GetTarget());
+				static::$menu_items[$sView][] = new URLPopupMenuItem($sUID, $sReport::GetTitle(), $sURL, $sReport::GetTarget());
 				
 			}
 			

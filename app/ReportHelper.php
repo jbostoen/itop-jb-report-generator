@@ -17,7 +17,6 @@ use \Exception;
 use ApplicationContext;
 use ApplicationException;
 use CMDBObjectSet;
-use Combodo\iTop\Application\WebPage\NiceWebPage;
 use DBObject;
 use DBObjectSearch;
 use DBObjectSet;
@@ -45,35 +44,35 @@ abstract class ReportGeneratorHelper {
 	const MODULE_CODE = 'jb-report-generator';
 	
 	
-	/** @var \Boolean $bStopProcessing Boolean which can force further processing to stop. Once set to true, all other processing that is supposed to follow, will be skipped. */
+	/** @var Boolean $bStopProcessing Boolean which can force further processing to stop. Once set to true, all other processing that is supposed to follow, will be skipped. */
 	private static $bStopProcessing = false;
 	
-	/** @var \Boolean $bSuppressOutput Boolean which indicates whether output will be suppressed (and stored internally in the below $aHeaders and $sOutput properties. */
+	/** @var Boolean $bSuppressOutput Boolean which indicates whether output will be suppressed (and stored internally in the below $aHeaders and $sOutput properties. */
 	private static $bSuppressOutput = false;
 	
-	/** @var \Array $aHeaders in which PHP headers will be stored if output is suppressed. */
+	/** @var Array $aHeaders in which PHP headers will be stored if output is suppressed. */
 	private static $aHeaders = [];
 	
-	/** @var \String $sOutput in which output will be stored if output is suppressed. */
+	/** @var String $sOutput in which output will be stored if output is suppressed. */
 	private static $sOutput = '';
 
-	/** @var \String Trace ID. */
+	/** @var String Trace ID. */
 	private static $sTraceId = '';
 
-	/** @var \String View: 'details' or 'list'. */
+	/** @var String View: 'details' or 'list'. */
 	private static $sView = '';
 
 	/**
-	 * @var \DBObjectSet|null $oSet_Objects;
+	 * @var DBObjectSet|null $oSet_Objects;
 	 */
 	private static $oSet_Objects = null;
 	
 	/**
 	 * Returns an array (similar to REST/JSON) from an iTop object set.
 	 *
-	 * @param \DBObjectSet $oObjectSet iTop object set.
+	 * @param DBObjectSet $oObjectSet iTop object set.
 	 *
-	 * @return \Array Each key is 'Class::ID' (the class being the common ancestor of the object set), with the value being an array (REST/JSON API structure).
+	 * @return Array Each key is 'Class::ID' (the class being the common ancestor of the object set), with the value being an array (REST/JSON API structure).
 	 */
 	public static function ObjectSetToArray(DBObjectSet $oObjectSet) {
 		
@@ -97,10 +96,10 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Returns array (similar to iTop REST/JSON) from object.
 	 *
-	 * @param \DBObject $oObject iTop object.
-	 * @param \String[] $aShowFields List of attribute codes to return. If not specified, all values of each attribute code will returned.
+	 * @param DBObject $oObject iTop object.
+	 * @param String[] $aShowFields List of attribute codes to return. If not specified, all values of each attribute code will returned.
 	 *
-	 * @return \Array REST/JSON API structure.
+	 * @return Array REST/JSON API structure.
 	 *
 	 *
 	 */
@@ -139,7 +138,7 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Executes the reporting.
 	 *
-	 * @param \String $sFilter OQL filter
+	 * @param String $sFilter OQL filter
 	 *
 	 * @return void
 	 */
@@ -226,7 +225,7 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Sets iTop objects set (currently being processed).
 	 *
-	 * @param \DBObjectSet $oSet_Objects A set of iTop objects.
+	 * @param DBObjectSet $oSet_Objects A set of iTop objects.
 	 *
 	 * @return void
 	 */
@@ -258,7 +257,7 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Gets iTop object set (currently being processed).
 	 *
-	 * @return \DBObjectSet
+	 * @return DBObjectSet
 	 */
 	public static function GetObjectSet() {
 		
@@ -275,7 +274,7 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Trace function used for debugging.
 	 *
-	 * @return \void
+	 * @return void
 	 */
 	public static function Trace($sMessage) {
 		
@@ -319,8 +318,8 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Sets a header.
 	 *
-	 * @param \String $sHeaderName Header name.
-	 * @param \String $sHeaderValue Value of the header.
+	 * @param String $sHeaderName Header name.
+	 * @param String $sHeaderValue Value of the header.
 	 *
 	 * @return void
 	 */
@@ -342,7 +341,7 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Returns the headers.
 	 *
-	 * @return \String
+	 * @return String
 	 */
 	public static function GetHeaders() {
 		
@@ -364,7 +363,7 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Adds to the output.
 	 *
-	 * @param \String $sOutput Output.
+	 * @param String $sOutput Output.
 	 *
 	 * @return void
 	 */
@@ -386,7 +385,7 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Returns the output.
 	 *
-	 * @return \String
+	 * @return String
 	 */
 	public static function GetOutput() {
 		
@@ -397,7 +396,7 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Sets whether or not the report processor should stop.
 	 *
-	 * @param \Boolean $bValue True/false.
+	 * @param Boolean $bValue True/false.
 	 *
 	 * @return void
 	 */
@@ -410,7 +409,7 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Returns whether or not the report processor should stop.
 	 *
-	 * @return \Boolean
+	 * @return Boolean
 	 */
 	public static function GetStopProcessing() {
 		
@@ -421,9 +420,9 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Sets whether or not the output should be suppressed (in which case it will be stored internally).
 	 *
-	 * @param \Boolean $bValue True/false.
+	 * @param Boolean $bValue True/false.
 	 *
-	 * @param \Boolean
+	 * @param Boolean
 	 */
 	public static function SetSuppressOutput($bValue) {
 		
@@ -434,7 +433,7 @@ abstract class ReportGeneratorHelper {
 	/**
 	 * Returns whether or not the output should be suppressed (in which case it will be stored internally).
 	 *
-	 * @return \Boolean
+	 * @return Boolean
 	 */
 	public static function GetSuppressOutput() {
 		
@@ -457,11 +456,14 @@ abstract class ReportGeneratorHelper {
 	
 	/**
 	 * Get view.  
-	 * Returns the value of the "view" URL parameter ('list', 'details').
+	 * Returns the value of the "view".
+	 * 
+	 * Usually, when viewing a report, this is derived from the URL parameter ('list', 'details').
+	 * For other purposes (e.g. when viewing iTop menus and adding menus/buttons), it is set explicitly.
 	 *
-	 * @return void
+	 * @return string
 	 */
-	public static function GetView() {
+	public static function GetView() : string {
 		
 		return static::$sView;
 
@@ -479,14 +481,14 @@ interface iReportProcessor {
 	/**
 	 * Whether or not this extension is applicable
 	 *
-	 * @return \Boolean
+	 * @return Boolean
 	 */
 	public static function IsApplicable();
 	
 	/**
 	 * Hook to enrich the report data.
 	 *
-	 * @param \Array $aReportData Report data.
+	 * @param Array $aReportData Report data.
 	 * 
 	 * @return void
 	 *
@@ -496,7 +498,7 @@ interface iReportProcessor {
 	/**
 	 * Action hook.
 	 *
-	 * @param \Array $aReportData Report data.
+	 * @param Array $aReportData Report data.
 	 *
 	 */
 	public static function DoExec($aReportData);
@@ -512,7 +514,7 @@ interface iReportUIElement {
 	/**
 	 * If a button should be shown instead of a menu item
 	 *
-	 * @return \Boolean
+	 * @return Boolean
 	 *
 	 */
 	public static function ForceButton();
@@ -520,7 +522,7 @@ interface iReportUIElement {
 	/**
 	 * Returns the precedence (order. Low = first, high = later)
 	 *
-	 * @return \Float
+	 * @return Float
 	 *
 	 */
 	public static function GetPrecedence();
@@ -528,7 +530,7 @@ interface iReportUIElement {
 	/**
 	 * Gets the HTML target. Uusally '_blank' or '_self'
 	 *
-	 * @return \String
+	 * @return String
 	 *
 	 */
 	public static function GetTarget();
@@ -536,7 +538,7 @@ interface iReportUIElement {
 	/**
 	 * Title of the menu item or button.
 	 * 
-	 * @return \String
+	 * @return String
 	 *
 	 * @details Hint: you can use Dict::S('...')
 	 *
@@ -546,7 +548,7 @@ interface iReportUIElement {
 	/**
 	 * URL Parameters.
 	 * 
-	 * @return \Array
+	 * @return Array
 	 */
 	public static function GetURLParameters();
 	
@@ -554,7 +556,7 @@ interface iReportUIElement {
 	/**
 	 * Whether or not this extension is applicable.
 	 *
-	 * @return \Boolean
+	 * @return Boolean
 	 *
 	 */
 	public static function IsApplicable();
@@ -569,7 +571,7 @@ abstract class AbstractReportUIElement implements iReportUIElement {
 	/**
 	 * If a button should be shown instead of a menu item
 	 *
-	 * @return \Boolean
+	 * @return Boolean
 	 *
 	 */
 	public static function ForceButton() {
@@ -619,7 +621,7 @@ abstract class AbstractReportUIElement implements iReportUIElement {
 abstract class ReportProcessorParent implements iReportProcessor {
 	
 	/**
-	 * @var \Integer $iRank Rank. Lower number = goes first.
+	 * @var Integer $iRank Rank. Lower number = goes first.
 	 */
 	public static $iRank = 50;
 	
@@ -661,7 +663,7 @@ abstract class ReportProcessorParent implements iReportProcessor {
 	/**
 	 * Outputs error (from Exception).
 	 *
-	 * @param \Exception $e Exception
+	 * @param Exception $e Exception
 	 *
 	 * @return void
 	 */
@@ -682,7 +684,7 @@ abstract class ReportProcessorParent implements iReportProcessor {
 abstract class ReportProcessorAttachments extends ReportProcessorParent  {
 	
 	/**
-	 * @var \Integer $iRank Rank. Lower number = goes first. Should run before ReportProcessorTwig and ReportProcessorTwigToPDF.
+	 * @var Integer $iRank Rank. Lower number = goes first. Should run before ReportProcessorTwig and ReportProcessorTwigToPDF.
 	 */
 	public static $iRank = 1;
 		
@@ -726,7 +728,7 @@ abstract class ReportProcessorAttachments extends ReportProcessorParent  {
 	 */
 	public static function EnrichData(&$aReportData) {
 		
-		/** @var \DBObjectSet|null $oSet_Objects iTop objects. */
+		/** @var DBObjectSet|null $oSet_Objects iTop objects. */
 		$oSet_Objects = ReportGeneratorHelper::GetObjectSet();
 
 		// Get keys to build one OQL Query
@@ -867,7 +869,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 	 *  "templateName.ext" is free to choose
 	 *
 	 *
-	 * @return \String Filename
+	 * @return String Filename
 	 */
 	public static function GetReportFileName() {
 		
@@ -889,7 +891,7 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 
 		if(file_exists($sReportFile) == false) {
 			
-			/** @var \DBObjectSet|null $oSet_Objects */
+			/** @var DBObjectSet|null $oSet_Objects */
 			$oSet_Objects = ReportGeneratorHelper::GetObjectSet();
 
 			if($oSet_Objects !== null) {
@@ -928,9 +930,9 @@ abstract class ReportProcessorTwig extends ReportProcessorParent {
 	/**
 	 * Returns content (HTML, XML, ...) of report
 	 *
-	 * @param \Array $aReportData Hashtable
+	 * @param Array $aReportData Hashtable
 	 *
-	 * @return \String Content
+	 * @return String Content
 	 */
 	public static function GetReportFromTwigTemplate($aReportData = []) {
 		
@@ -1020,10 +1022,10 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 	/**
 	 * @inheritDoc
 	 *
-	 * @param \DBObjectSet $oSet_Objects CMDBObjectSet of iTop objects which are being processed
-	 * @param \String $sView View. 'details', 'list'
+	 * @param DBObjectSet $oSet_Objects CMDBObjectSet of iTop objects which are being processed
+	 * @param String $sView View. 'details', 'list'
 	 * *
-	 * @return \Boolean
+	 * @return Boolean
 	 *
 	 */
 	public static function IsApplicable() {
@@ -1043,16 +1045,16 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 		
 		try {
 			
-			/** @var \DBObjectSet|null $oSet_Objects iTop objects. */
+			/** @var DBObjectSet|null $oSet_Objects iTop objects. */
 			$oSet_Objects = ReportGeneratorHelper::GetObjectSet();
 			
-			/** @var \Spatie\Browsershot\Browsershot $oPDF PDF Object */
+			/** @var Spatie\Browsershot\Browsershot $oPDF PDF Object */
 			$sBase64 = static::GetPDFObject($aReportData);
 			$sPDF = base64_decode($sBase64);
 			
 			$sAction = utils::ReadParam('action', '', false, 'string');
 			
-			/** @var \DBObject $oObject iTop object */
+			/** @var DBObject $oObject iTop object */
 			$oObject = $oSet_Objects->Fetch();
 		
 			switch($sAction) {
@@ -1107,9 +1109,9 @@ abstract class ReportProcessorTwigToPDF extends ReportProcessorTwig {
 	/**
 	 * Get PDF object based on report data.
 	 *
-	 * @param \Array $aReportData Hashtable
+	 * @param Array $aReportData Hashtable
 	 *
-	 * @return \String
+	 * @return String
 	 */
 	public static function GetPDFObject($aReportData) {
 		
