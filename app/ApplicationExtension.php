@@ -10,8 +10,6 @@
 
 namespace jb_itop_extensions\report_generator;
 
-use jb_itop_extensions\report_generator\ReportGeneratorHelper;
-
 // iTop internals
 use DBOBject;
 use DBObjectSet;
