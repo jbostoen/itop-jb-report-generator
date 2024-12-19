@@ -15,7 +15,7 @@ Basic example:
 <?php
 
 // Use the same namespace as the report generator
-namespace jb_itop_extensions\report_generator;
+namespace JeffreyBostoenExtensions\ReportGenerator;
 
 // iTop internals
 use \DBObjectSet;

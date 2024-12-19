@@ -23,7 +23,7 @@
  * other custom defined parameters may be specified.
 */
 
-namespace jb_itop_extensions\report_generator;
+namespace JeffreyBostoenExtensions\ReportGenerator;
 
 // iTop internals.
 use Dict;

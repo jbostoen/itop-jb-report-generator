@@ -8,7 +8,7 @@
  * Definition of class ReportProcessorParent. Parent Report Tool (ReportProcessor) to expand upon.
  */
 
-namespace jb_itop_extensions\report_generator;
+ namespace JeffreyBostoenExtensions\ReportGenerator;
 
 // Generic
 use \Exception;
