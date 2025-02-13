@@ -1,4 +1,9 @@
 {
+    "autoload": {
+        "psr-0": {
+            "AppName": "src/"
+        }
+    },
     "require": {
         "twig/twig": "^3.",
         "chillerlan/php-qrcode": "^5.",

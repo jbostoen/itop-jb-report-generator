@@ -1,8 +1,8 @@
 <?php
 /**
- * @copyright   Copyright (c) 2019-2024 Jeffrey Bostoen
+ * @copyright   Copyright (c) 2019-2025 Jeffrey Bostoen
  * @license     https://www.gnu.org/licenses/gpl-3.0.en.html
- * @version     2.7.240425
+ * @version     3.2.250213
  *
  * Shows report.
  *
@@ -21,9 +21,9 @@
  * action:				String. Name of custom action ('show_pdf')
  * 
  * other custom defined parameters may be specified.
-*/
+ */
 
-namespace JeffreyBostoenExtensions\ReportGenerator;
+namespace JeffreyBostoenExtensions\Reporting;
 
 // iTop internals.
 use Dict;
@@ -47,10 +47,6 @@ use Exception;
 	// Autoloader (Twig, chillerlan\QRCode, ...)
 	require_once('vendor/autoload.php');
 	
-	// Get iTop's Dict::S('string') so it can be exposed to Twig as well 
-	// require_once( APPROOT . '/application/utils.inc.php' );
-	// require_once( APPROOT . '/core/coreexception.class.inc.php' );
-	// require_once( APPROOT . '/core/dict.class.inc.php' );
 	
 	try {
 		
@@ -63,14 +59,14 @@ use Exception;
 			throw new SecurityException('You must be logged in');
 		}
 
-		// Okay if this is emmpty.
-		ReportGeneratorHelper::SetView(utils::ReadParam('view', '', false, 'string'));
+		// Okay if this is empty.
+			Helper::SetView(utils::ReadParam('view', '', false, 'string'));
 		
 		// Sets the object set.
-		ReportGeneratorHelper::SetObjectSetFromFilter();
+			Helper::SetObjectSetFromFilter();
 
 		// Execute the report.
-		ReportGeneratorHelper::DoExec();
+			Helper::DoExec();
 		
 		// If needed (most likely exited by now):
 		set_time_limit($iOriginalTimeLimit);

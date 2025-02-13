@@ -1,14 +1,15 @@
 <?php
 
 /**
- * @copyright   Copyright (c) 2019-2024 Jeffrey Bostoen
+ * @copyright   Copyright (c) 2019-2025 Jeffrey Bostoen
  * @license     https://www.gnu.org/licenses/gpl-3.0.en.html
- * @version     2.7.240425
+ * @version     3.2.250213
  *
  * Definitions of interfaces for the report generator
  */
 
- namespace JeffreyBostoenExtensions\ReportGenerator;
+namespace JeffreyBostoenExtensions\Reporting;
+ 
 
 // iTop internals
 use DBOBject;
@@ -22,7 +23,7 @@ use utils;
  * Class PopupMenuExtension_ReportGenerator.
  * Adds items to popup menu of to 'Details' view, to generate reports.
  */
-class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
+class Menu implements iPopupMenuExtension {
 	
 	
 	/**
@@ -44,10 +45,10 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 		if($iMenuId == static::MENU_OBJDETAILS_ACTIONS) {
 		  
 			/** @var DBObject $param iTop object of which details are being displayed. */
-			ReportGeneratorHelper::SetObjectSet(DBObjectSet::FromObject($param));
+			Helper::SetObjectSet(DBObjectSet::FromObject($param));
 
 			// Process templates.
-			ReportGeneratorHelper::SetView('details');
+			Helper::SetView('details');
 			static::GetReports();
 
 			return static::$menu_items['details'];
@@ -57,10 +58,10 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 		elseif($iMenuId == static::MENU_OBJLIST_ACTIONS) {
 			
 			/** @var DBObjectSet $param Set of iTop objects which are being displayed in a list. */
-			ReportGeneratorHelper::SetObjectSet($param);
+			Helper::SetObjectSet($param);
 
 			// Process templates.
-			ReportGeneratorHelper::SetView('list');
+			Helper::SetView('list');
 			static::GetReports();
 
 			return static::$menu_items['list'];
@@ -82,46 +83,51 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 	 */
 	public static function GetReports() {
 
-		$sView = ReportGeneratorHelper::GetView();
+		$sView = Helper::GetView();
 
-		// Proper init.
-		static::$menu_items[$sView] = [];
+		// - Proper init / reset.
+
+			static::$menu_items[$sView] = [];
 		
-		// Menu items which should be shown as buttons.
-		static::$shortcut_actions = MetaModel::GetConfig()->Get('shortcut_actions');
+		// - Get the current menu items that are promoted to buttons.
 		
-		// Process all policies
-		$aReports = [];
-		foreach(get_declared_classes() as $sClassName) {
+			static::$shortcut_actions = MetaModel::GetConfig()->Get('shortcut_actions');
 		
-			if(in_array('jb_itop_extensions\report_generator\iReportUIElement', class_implements($sClassName))) {
-				$aReports[] = $sClassName;
+		// - Process all UI elements.
+			
+			$aReports = [];
+			foreach(get_declared_classes() as $sClassName) {
+			
+				if(in_array('JeffreyBostoenExtensions\Reporting\UI\iBase', class_implements($sClassName))) {
+					if($sClassName::IsApplicable() == true) {
+						$aReports[] = $sClassName;
+					}
+				}
+				
 			}
-			
-		}
 		
-		// Reports must be executed in a certain order (for instance: to change button order).
-		// The order in which these actions are executed, is important.
-		usort($aReports, function($sClassNameA, $sClassNameB) {
-			return $sClassNameA::GetPrecedence() <=> $sClassNameB::GetPrecedence();
-		});
-
-		/** @var DBObjectSet|null $oSet_Objects Object set. */
-		$oSet_Objects = ReportGeneratorHelper::GetObjectSet();
-
-		foreach($aReports as $sReport) {
+		// - Order the UI elements.
 			
-			if($sReport::IsApplicable() == true) {
-		
-				// UID must simply be unique.Keep alphanumerical version of filename.
-				$sUID = ReportGeneratorHelper::MODULE_CODE.'_'.preg_replace('/[^\dA-Za-z_-]/i', '', $sReport).'_'.rand(0, 10000);
+			usort($aReports, function($sClassNameA, $sClassNameB) {
+				return $sClassNameA::GetPrecedence() <=> $sClassNameB::GetPrecedence();
+			});
+
+		// - Add each UI element.
+
+			/** @var DBObjectSet|null $oSet_Objects Object set. */
+			$oSet_Objects = Helper::GetObjectSet();
+
+			foreach($aReports as $sReport) {
+				
+				// UID must be unique. Keep alphanumerical version of filename.
+				$sUID = Helper::MODULE_CODE.'_'.preg_replace('/[^\dA-Za-z_-]/i', '', $sReport).'_'.rand(0, 10000);
 				
 				// Add shortcut (button) or keep menu item?
 				static::$shortcut_actions .= ($sReport::ForceButton() == true ? ','.$sUID : '');
 				
 				// URL should pass location of the report (folder/report) and the OQL query for the object(s).
 				$sURL = utils::GetAbsoluteUrlExecPage().'?'.
-					'&exec_module='.ReportGeneratorHelper::MODULE_CODE.
+					'&exec_module='.Helper::MODULE_CODE.
 					'&exec_page=reporting.php'.
 					'&exec_env='.utils::GetCurrentEnvironment().
 					'&view='.$sView.
@@ -137,12 +143,11 @@ class PopupMenuExtensionReportGenerator implements iPopupMenuExtension {
 					
 				static::$menu_items[$sView][] = new URLPopupMenuItem($sUID, $sReport::GetTitle(), $sURL, $sReport::GetTarget());
 				
+				
 			}
-			
-		}
 		
-		// Update shortcut_actions
-		MetaModel::GetConfig()->Set('shortcut_actions', ltrim(static::$shortcut_actions, ','));
+		// - Update shortcut_actions.
+			MetaModel::GetConfig()->Set('shortcut_actions', ltrim(static::$shortcut_actions, ','));
 		 
 	}
 	 

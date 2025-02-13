@@ -5,83 +5,46 @@
 * For basic reports (HTML or PDF), add a file structure: templates/ClassName/details-or-list/filename.ext
   * Example: templates/UserRequest/details/ticket.html
   
-* Create a PHP file which is loaded through the extension: extend the abstract class ```AbstractReportUIElement``` which implements the interface ```iReportUIElement```.
+* Create a PHP file which is loaded through the extension: extend the abstract class ```Base``` or one of its child classes.
   * Set a condition which determines when the report button should be shown (for which classes, for which view, ...).
   
   
-Basic example:
+Below you'll find a basic example to add a "Show PDF" button.
+
+For a "Show report" button that shows a HTML report, use `extends Base` instead of `extends BasePDF`.
  
 ```
 <?php
 
-// Use the same namespace as the report generator
-namespace JeffreyBostoenExtensions\ReportGenerator;
+namespace JeffreyBostoenExtensions\Reporting\UI;
 
 // iTop internals
-use \DBObjectSet;
-use \Dict;
+use DBObjectSet;
+use Dict;
 
 /**
- * Class ReportUIElement_UserRequest_Details. Enables a "Show PDF" button in iTop's GUI.
+ * Class UserRequestDetails. Enables a "Show PDF" button in iTop's GUI.
  */
-abstract class ReportUIElement_UserRequest_Details extends AbstractReportUIElement {
-		
-	/**
-	 * Title of the menu item or button
-	 *
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 * @param \String $sView View: 'details' or 'list'
-	 *
-	 * @return \String
-	 *
-	 * @details Hint: you can use Dict::S('...')
-	 *
-	 */
-	public static function GetTitle(DBObjectSet $oSet_Objects, $sView) {
-	
-		return Dict::S('UI:Report:ShowPDF');
-		
-	}
+abstract class UserRequestDetails extends BaseShowPDF {
 	
 	/**
-	 * URL Parameters. Often 'template' or additional parameters for extended iReportProcessor implementations.
-	 *
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 * @param \String $sView View: 'details' or 'list'
-	 *
-	 * @return \Array
+	 *@inheritDoc
 	 */
-	public static function GetURLParameters(DBObjectSet $oSet_Objects, $sView) {
-	
+	public static function GetSpecificURLParameters(DBObjectSet $oSet_Objects, $sView) : array {
+
 		return [
 			// The name of the template.
 			// The modern implementation expects a full relative path (compared to your new iTop extension's directory).
 			'template' => 'reports/UserRequest/details_ticket.html',
-			// This extension comes with some built-in "actions".
-			// They include:
-			// - '' (empty string) : Simply render a HTML template.
-			// - 'show_pdf' : Creates a PDF, displays it in the browser (unless the default action in the browser is to download PDFs instead of showing them).
-			// - 'download_pdf' : Creates a PDF, downloads it in the browser.
-			// - 'attach_pdf' : Creates a PDF, adds it as an attachment to the iTop object.
-			// Providing an empty string instead, just renders a simple HTML report.
-			'action' => 'show_pdf',
-			// The reportdir should point to the name of your iTop extension in which you define the report.
-			'reportdir' => 'jb-report-generator'
 		];
 		
 	}
 	
 	
 	/**
-	 * Whether or not this UI element is applicable
-	 *
-	 * @param \DBObjectSet $oSet_Objects DBObjectSet of iTop objects which are being processed
-	 * @param \String $sView View: 'details' or 'list'
-	 *
-	 * @return \Boolean
-	 *
+	 * @inheritDoc
 	 */
-	public static function IsApplicable(DBObjectSet $oSet_Objects, $sView) {
+	public static function IsApplicable() : bool {
 	
 		return ($sView == 'details' && $oSet_Objects->GetClass() == 'UserRequest');
 		
@@ -198,10 +161,10 @@ Here's an example to generate a QR code for an object:
 
 # PHP classes: Report vs. report tool
 
-In this implementation, a **report processor** is something which either **enriches the data** (this could be transforming, linking different data, ...) and/or **provides new actions**.  
-An example of a report tool is the PDF export option, which is included in this extension.
+In this implementation, a **report processor** either **enriches the data** (this could be transforming, linking different data, ...) and/or **provides new actions**.  
+An example of a report tool is the PDF export option, included in this extension.
 
-A **report UI element** is used to add a menu action or button in the front end.  
+A **report UI element** is used to add a menu action or button in the user interface (object list or details).  
 It is based on a certain condition (e.g. "if a list view of user requests is displayed, show this report option").  
 It defines the action (just showing the report, showing a PDF version, attaching the PDF to the object, ...) that will be performed by one or more processors.  
 

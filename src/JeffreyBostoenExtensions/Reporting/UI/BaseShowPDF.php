@@ -1,0 +1,62 @@
+<?php
+
+namespace JeffreyBostoenExtensions\Reporting\UI;
+
+// iTop internals
+use Dict;
+
+/**
+ * Class BaseShowPDF. Enables the user to view a PDF version of a template.
+ */
+abstract class BaseShowPDF extends Base {
+	
+	/**
+	 * @inheritDoc
+	 *
+	 */
+	public static function GetTarget() : string {
+		return '_self';
+	}
+	
+	/**
+	 * @inheritDoc
+	*/
+	public static function GetTitle() : string {
+		
+		return Dict::S('UI:Report:ShowPDF');
+		
+	}
+	
+	/**
+	 * @inheritDoc
+	*/
+	public static function GetURLParameters() : array {		
+	
+		return array_merge(static::GetSpecificURLParameters(), [
+			'action' => 'attach_pdf',
+		]);
+		
+	}
+	
+	/**
+	 * Override this method to add specific parameters.
+	 * 
+	 * @return array
+	*/
+	public static function GetSpecificURLParameters() : array {		
+	
+		return [];
+		
+	}
+	
+	/**
+	 * @inheritDoc
+	*/
+	public static function IsApplicable() : bool {
+		
+		return false;
+		
+	}
+	
+}
+

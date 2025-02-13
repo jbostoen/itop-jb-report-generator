@@ -1,20 +1,20 @@
 <?php
 
 /**
- * @copyright   Copyright (c) 2019-2024 Jeffrey Bostoen
+ * @copyright   Copyright (c) 2019-2025 Jeffrey Bostoen
  * @license     https://www.gnu.org/licenses/gpl-3.0.en.html
- * @version     2.7.240425
+ * @version     3.2.250213
  *
  * iTop module definition file
  */
  
 SetupWebPage::AddModule(
         __FILE__, // Path to the current file, all other file names are relative to the directory containing this file
-        'jb-report-generator/2.7.240425',
+        'jb-report-generator/3.2.250213',
         array(
                 // Identification
                 //
-                'label' => 'Feature: report generator',
+                'label' => 'Feature: Reporting',
                 'category' => 'business',
 
                 // Setup
@@ -29,8 +29,16 @@ SetupWebPage::AddModule(
                 'datamodel' => array(
 			// 'model.jb-report-generator.php',
 			// 'vendor/autoload.php', Note: this Twig version is not compatible with iTop 3.0? So don't add this here, as it will crash the setup.
-			'app/ReportHelper.php',
-			'app/ApplicationExtension.php',
+			'src/JeffreyBostoenExtensions/Reporting/Helper.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/Base.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/Attachments.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/Twig.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigToPDF.php',
+			'src/JeffreyBostoenExtensions/Reporting/UI/Base.php',
+			'src/JeffreyBostoenExtensions/Reporting/UI/BaseAttachPDF.php',
+			'src/JeffreyBostoenExtensions/Reporting/UI/BaseDownloadPDF.php',
+			'src/JeffreyBostoenExtensions/Reporting/UI/BaseShowPDF.php',
+			'src/JeffreyBostoenExtensions/Reporting/UI/Menu.php',
                 ),
                 'webservice' => array(
 

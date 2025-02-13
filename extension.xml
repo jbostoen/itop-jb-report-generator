@@ -5,10 +5,10 @@
 	<author><![CDATA[jbostoen]]></author>
 	<label><![CDATA[Feature: Report generator]]></label>
 	<description><![CDATA[Quickly add new reports on object details in a generic way.]]></description>
-	<version>2.7.240425</version>
-	<release_date>2024-04-25</release_date>
+	<version>3.2.250213</version>
+	<release_date>2025-02-13</release_date>
 	<version_description><![CDATA[]]></version_description>
-	<itop_version_min>2.7.0</itop_version_min>
+	<itop_version_min>3.2.0</itop_version_min>
 	<status>stable</status>
 	<mandatory>false</mandatory>
 	<more_info_url><![CDATA[https://jeffreybostoen.be]]></more_info_url>
