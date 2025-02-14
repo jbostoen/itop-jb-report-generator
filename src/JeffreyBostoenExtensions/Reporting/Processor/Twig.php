@@ -47,51 +47,6 @@ abstract class Twig extends Base {
 	/**
 	 * @inheritDoc
 	 */
-	public static function EnrichData(&$aReportData) : void {
-		
-		// @todo This extension was originally created for iTop 2.7. 
-		// Since then, some methods are exposed natively in iTop 3.0
-		
-		// Enrich with common libraries.
-		$sModuleUrl = utils::GetCurrentModuleUrl();
-
-		$aReportData = array_merge_recursive($aReportData, [
-
-			'itop' => [
-				// Enrich data with iTop setting (remove trailing /)
-				'root_url' => rtrim(utils::GetAbsoluteUrlAppRoot(), '/'),
-				'env' => utils::GetCurrentEnvironment(),
-				// This one may need better documentation:
-				'report_url' => utils::GetAbsoluteUrlAppRoot().'pages/exec.php?'.
-					'&exec_module='.Helper::MODULE_CODE.
-					'&exec_page=reporting.php'.
-					'&exec_env='.utils::GetCurrentEnvironment()
-			],
-
-			// Included common libraries.
-			'lib' => [
-				'bootstrap' => [
-					'js' => $sModuleUrl.'/vendor/components/jquery/jquery.min.js',
-					'css' => $sModuleUrl.'/vendor/twbs/bootstrap/dist/css/bootstrap.min.css',
-				],
-				'jquery' => [
-					'js' => $sModuleUrl.'/vendor/components/jquery/jquery.min.js',
-				],
-				'fontawesome' => [
-					'css' => $sModuleUrl.'/vendor/components/font-awesome/css/all.min.css',
-				],
-			],
-
-			// Expose the $_REQUEST parameters (expected: GET).
-			'request' => $_REQUEST,
-
-		]);
-		
-	}
-	
-	/**
-	 * @inheritDoc
-	 */
 	public static function DoExec($aReportData) : bool {
 		
 		try {

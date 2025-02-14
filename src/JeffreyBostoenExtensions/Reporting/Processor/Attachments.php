@@ -42,7 +42,6 @@ abstract class Attachments extends Base {
 				
 			// Does the file contain an indication of '.attachments' and the use of 'fields.contents' (.data, .mimetype, .filename)?
 			$sFileName = Twig::GetReportFileName();
-			
 			$sContent = file_get_contents(APPROOT.'env-'.utils::GetCurrentEnvironment().'/'.$sFileName);
 			
 			if(preg_match('/\.attachments/', $sContent) && preg_match('/fields\.contents\.(data|mimetype|filename)/', $sContent)) {
@@ -50,12 +49,9 @@ abstract class Attachments extends Base {
 				return true;
 			}
 			
-				
 		}
-			
 		
 		return false;
-		
 		
 	}
 	
@@ -66,6 +62,7 @@ abstract class Attachments extends Base {
 		
 		/** @var DBObjectSet|null $oSet_Objects iTop objects. */
 		$oSet_Objects = Helper::GetObjectSet();
+		$oSet_Objects->Rewind();
 
 		// Get keys to build one OQL Query
 		$aKeys = [ -1];

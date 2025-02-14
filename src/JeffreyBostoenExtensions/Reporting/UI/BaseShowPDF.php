@@ -33,28 +33,8 @@ abstract class BaseShowPDF extends Base {
 	public static function GetURLParameters() : array {		
 	
 		return array_merge(static::GetSpecificURLParameters(), [
-			'action' => 'attach_pdf',
+			'action' => 'show_pdf',
 		]);
-		
-	}
-	
-	/**
-	 * Override this method to add specific parameters.
-	 * 
-	 * @return array
-	*/
-	public static function GetSpecificURLParameters() : array {		
-	
-		return [];
-		
-	}
-	
-	/**
-	 * @inheritDoc
-	*/
-	public static function IsApplicable() : bool {
-		
-		return false;
 		
 	}
 	

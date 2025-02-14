@@ -51,6 +51,7 @@ abstract class TwigToPDF extends Twig {
 			
 			/** @var DBObjectSet|null $oSet_Objects iTop objects. */
 			$oSet_Objects = Helper::GetObjectSet();
+			$oSet_Objects->Rewind();
 			
 			/** @var Spatie\Browsershot\Browsershot $oPDF PDF Object */
 			$sBase64 = static::GetPDFObject($aReportData);
@@ -143,7 +144,7 @@ abstract class TwigToPDF extends Twig {
 	 */
 	public static function GetPDFObject($aReportData) : string {
 		
-		
+		// 
 		try {
 			
 			// The default mode is 'browsershot'.

@@ -39,24 +39,4 @@ abstract class BaseDownloadPDF extends Base {
 		
 	}
 	
-	/**
-	 * Override this method to add specific parameters.
-	 * 
-	 * @return array
-	*/
-	public static function GetSpecificURLParameters() : array {		
-	
-		return [];
-		
-	}
-
-	/**
-	 * @inheritDoc
-	*/
-	public static function IsApplicable() : bool {
-		
-		return false;
-		
-	}
-	
 }

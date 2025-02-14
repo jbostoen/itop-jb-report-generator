@@ -53,27 +53,24 @@ abstract class Helper {
 
 	/**
 	 * Returns an optimized set of attribute codes for the current filter.
+	 * 
+	 * @param string $sClassName Class name (Can be different from the main set!).
 	 *
 	 * @return array
 	 */
-	public static function GetAttributesToOutputForFilter() : array {
+	public static function GetAttributesToOutputForFilter(string $sClassName) : array {
 
-		$aOptimizedAttCodes = static::GetOptimizedAttCodes();
-		
 		// Already specified by a processor?
-		if(count($aOptimizedAttCodes) == 0) {
+		// If during enriching another class is called; this may need different optimization.
+		if(count(static::$aOptimizedAttCodes) == 0 || !isset(static::$aOptimizedAttCodes[$sClassName])) {
 
-			$sClass = static::GetObjectSet()->GetClass();
-
-			foreach(array_keys(MetaModel::ListAttributeDefs($sClass)) as $sAttCode) {
-				$aOptimizedAttCodes[$sClass][] = $sAttCode;
+			foreach(array_keys(MetaModel::ListAttributeDefs($sClassName)) as $sAttCode) {
+				static::$aOptimizedAttCodes[$sClassName][] = $sAttCode;
 			}
-
-			static::$aOptimizedAttCodes = $aOptimizedAttCodes;
 
 		}
 		
-		return $aOptimizedAttCodes;
+		return static::$aOptimizedAttCodes;
 
 	}
 	
@@ -113,7 +110,7 @@ abstract class Helper {
 
 		static::Trace('Convert %1$s to API RestResult.', $oObject::class.'::'.$oObject->GetKey());
 		
-		$aOptimizedAttCodes = static::GetAttributesToOutputForFilter();
+		$aOptimizedAttCodes = static::GetAttributesToOutputForFilter($oObject::class);
 
 		static::Trace('Optimized attribute codes: %1$s', json_encode($aOptimizedAttCodes, JSON_PRETTY_PRINT));
 
@@ -213,13 +210,44 @@ abstract class Helper {
 			
 			static::Trace('Common enrichment.');
 
+			// Enrich with common libraries.
+			$sModuleUrl = utils::GetCurrentModuleUrl();
+			
 			// Expose some variables so they can be used in reports
-			$aReportData = array_merge($aReportData, [
+			$aReportData = array_merge_recursive($aReportData, [
 				'current_contact' => static::ObjectToArray(UserRights::GetUserObject()),
 				'request' => $_REQUEST,
 				'application' => [
 					'url' => MetaModel::GetConfig()->Get('app_root_url'),
-				]
+				],
+				
+				'itop' => [
+					// Enrich data with iTop setting (remove trailing /)
+					'root_url' => rtrim(utils::GetAbsoluteUrlAppRoot(), '/'),
+					'env' => utils::GetCurrentEnvironment(),
+					// This one may need better documentation:
+					'report_url' => utils::GetAbsoluteUrlAppRoot().'pages/exec.php?'.
+						'&exec_module='.Helper::MODULE_CODE.
+						'&exec_page=reporting.php'.
+						'&exec_env='.utils::GetCurrentEnvironment()
+				],
+
+				// Included common libraries.
+				'lib' => [
+					'bootstrap' => [
+						'js' => $sModuleUrl.'/vendor/twbs/bootstrap/dist/js/bootstrap.min.js',
+						'css' => $sModuleUrl.'/vendor/twbs/bootstrap/dist/css/bootstrap.min.css',
+					],
+					'jquery' => [
+						'js' => $sModuleUrl.'/vendor/components/jquery/jquery.min.js',
+					],
+					'fontawesome' => [
+						'css' => $sModuleUrl.'/vendor/components/font-awesome/css/all.min.css',
+					],
+				],
+
+				// Expose the $_REQUEST parameters (expected: GET).
+				'request' => $_REQUEST,
 			]);
 			
 		
@@ -232,7 +260,7 @@ abstract class Helper {
 				$sClassName::EnrichData($aReportData);
 
 			}
-
+			
 		// - Execute using processors.
 		
 			static::Trace('Processors: Execute.');
@@ -288,11 +316,6 @@ abstract class Helper {
 	 * @return DBObjectSet
 	 */
 	public static function GetObjectSet() : DBObjectSet{
-		
-		// Rewind if there is a DBObjectSet.
-		if(static::$oSet_Objects !== null) {
-			static::$oSet_Objects->Rewind();
-		}
 
 		return static::$oSet_Objects;
 		
