@@ -56,7 +56,7 @@ abstract class Helper {
 	 *
 	 * @return array
 	 */
-	public static function GetAttributeseToOutputForFilter() : array {
+	public static function GetAttributesToOutputForFilter() : array {
 
 		$aOptimizedAttCodes = static::GetOptimizedAttCodes();
 		
@@ -68,6 +68,8 @@ abstract class Helper {
 			foreach(array_keys(MetaModel::ListAttributeDefs($sClass)) as $sAttCode) {
 				$aOptimizedAttCodes[$sClass][] = $sAttCode;
 			}
+
+			static::$aOptimizedAttCodes = $aOptimizedAttCodes;
 
 		}
 		
@@ -85,12 +87,14 @@ abstract class Helper {
 	public static function ObjectSetToArray(DBObjectSet $oObjectSet) : array {
 		
 		$aResult = [];
-		$aOptimizedAttCodes = static::GetAttributeseToOutputForFilter();
 		
+		Helper::Trace('Convert object set.');
+
+		$oObjectSet->Rewind();
 		while($oObject = $oObjectSet->Fetch()) {
 
 			$sKey = $oObject::class.'::'.$oObject->GetKey();
-			$aResult[$sKey] = static::ObjectToArray($oObject, $aOptimizedAttCodes);
+			$aResult[$sKey] = static::ObjectToArray($oObject);
 			
 		}
 		
@@ -102,17 +106,19 @@ abstract class Helper {
 	 * Returns array (similar to iTop REST/JSON) from object.
 	 *
 	 * @param DBObject $oObject iTop object.
-	 * @param string[] $aShowFields List of attribute codes to return. If not specified, all values of each attribute code will returned.
 	 *
 	 * @return array REST/JSON API structure.
-	 *
-	 *
 	 */
-	public static function ObjectToArray(DBObject $oObject, $aShowFields = null) : array {
-		
-		$oResult = new RestResultWithObjects();
+	public static function ObjectToArray(DBObject $oObject) : array {
 
-		$oResult->AddObject(0, '', $oObject, static::GetAttributeseToOutputForFilter());
+		static::Trace('Convert %1$s to API RestResult.', $oObject::class.'::'.$oObject->GetKey());
+		
+		$aOptimizedAttCodes = static::GetAttributesToOutputForFilter();
+
+		static::Trace('Optimized attribute codes: %1$s', json_encode($aOptimizedAttCodes, JSON_PRETTY_PRINT));
+
+		$oResult = new RestResultWithObjects();
+		$oResult->AddObject(0, '', $oObject, $aOptimizedAttCodes);
 		
 		if(is_null($oResult->objects) == true) {
 			return [];
@@ -161,7 +167,9 @@ abstract class Helper {
 			usort($aReportProcessors, function($a, $b) {
 				return $a::$iRank <=> $b::$iRank;
 			});
-		
+
+			static::Trace('Processors: %1$s', implode(', ', $aReportProcessors));
+
 		// - Before fetch allows optimizations.
 
 			static::Trace('Processors: BeforeFetch().');
