@@ -51,7 +51,6 @@ abstract class TwigToPDF extends Twig {
 			
 			/** @var DBObjectSet|null $oSet_Objects iTop objects. */
 			$oSet_Objects = Helper::GetObjectSet();
-			$oSet_Objects->Rewind();
 			
 			/** @var Spatie\Browsershot\Browsershot $oPDF PDF Object */
 			$sBase64 = static::GetPDFObject($aReportData);
@@ -149,6 +148,10 @@ abstract class TwigToPDF extends Twig {
 			
 			// The default mode is 'browsershot'.
 			$sMode = MetaModel::GetModuleSetting(Helper::MODULE_CODE, 'pdf_renderer', 'browsershot');
+			Helper::Trace('Mode = %1$s', $sMode);
+
+			// Get HTML for this report.
+			$sHTML = static::GetReportFromTwigTemplate($aReportData)->sContent;
 
 			if($sMode == 'browsershot') {
 			
@@ -157,8 +160,6 @@ abstract class TwigToPDF extends Twig {
 					throw new ApplicationException('PHP Library \Spatie\BrowserShot\BrowserShot seems not to be configured or installed properly.');
 				}
 			
-				// Get HTML for this report.
-				$sHTML = static::GetReportFromTwigTemplate($aReportData)->content;
 				
 				$aBrowserShotSettings = MetaModel::GetModuleSetting(Helper::MODULE_CODE, 'browsershot', [
 					'node_binary' => 'node.exe', // Directory with node binary is in an environmental variable
@@ -213,9 +214,7 @@ abstract class TwigToPDF extends Twig {
 					$oBrowsershot->ignoreHttpsErrors(); // Necessary on quickly configured local hosts with self signed certificates, otherwise linked scripts and stylesheets are ignored
 				}
 					
-				$sBase64 = $oBrowsershot->base64pdf();
-
-				return $sBase64;
+				$sData = $oBrowsershot->base64pdf();
 					
 			}
 			elseif($sMode == 'external') {
@@ -231,9 +230,6 @@ abstract class TwigToPDF extends Twig {
 				if($sProxyUrl == '') {
 					throw new Exception('No URL specified (pdf_external_renderer_url section).');
 				}
-				
-				// Get HTML for this report.
-				$sHTML = static::GetReportFromTwigTemplate($aReportData)->content;
 				
 				// Post data as JSON.
 				$ch = curl_init($sProxyUrl);
@@ -277,7 +273,7 @@ abstract class TwigToPDF extends Twig {
 					throw new Exception('Failed to render PDF. Error code: '.$oData->error.', message: '.$oData->message);
 				}
 				
-				return $oData->pdf;
+				$sData = $oData->pdf;
 				
 			}
 			else {
@@ -286,10 +282,13 @@ abstract class TwigToPDF extends Twig {
 
 			}
 
+			return $sData;
+
 		}
 		catch(Exception $e) {
 
 			Helper::Trace('TwigToPDF GetPDFObject() failed: %1$s', $e->getMessage());
+			throw new Exception('Unable to generate PDF.');
 
 		}
 		

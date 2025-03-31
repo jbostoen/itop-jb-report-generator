@@ -30,7 +30,7 @@ abstract class UserRequestDetails extends BaseShowPDF {
 	/**
 	 *@inheritDoc
 	 */
-	public static function GetSpecificURLParameters(DBObjectSet $oSet_Objects, $sView) : array {
+	public static function GetURLParameters(DBObjectSet $oSet_Objects, $sView) : array {
 
 		return [
 			// The name of the template.

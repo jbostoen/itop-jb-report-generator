@@ -3,7 +3,7 @@
 This extension uses some PHP packages that are installed with composer.  
 Use composer to install and update all required packages (composer.json is included)
 
-Needs at least PHP 7.4
+Needs at least PHP 8.2
 
 
 **Required packages**:

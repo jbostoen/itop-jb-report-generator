@@ -8,8 +8,9 @@
  * Definitions of interfaces for the report generator
  */
 
-namespace JeffreyBostoenExtensions\Reporting;
+namespace JeffreyBostoenExtensions\Reporting\UI;
  
+use JeffreyBostoenExtensions\Reporting\Helper;
 
 // iTop internals
 use DBOBject;
@@ -20,7 +21,7 @@ use URLPopupMenuItem;
 use utils;
 
 /**
- * Class PopupMenuExtension_ReportGenerator.
+ * Class Menu..
  * Adds items to popup menu of to 'Details' view, to generate reports.
  */
 class Menu implements iPopupMenuExtension {

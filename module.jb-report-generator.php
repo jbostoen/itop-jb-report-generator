@@ -34,6 +34,9 @@ SetupWebPage::AddModule(
 			'src/JeffreyBostoenExtensions/Reporting/Processor/Attachments.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/Twig.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigToPDF.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/Base.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/DictS.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/MakeObjectUrl.php',
 			'src/JeffreyBostoenExtensions/Reporting/UI/Base.php',
 			'src/JeffreyBostoenExtensions/Reporting/UI/BaseAttachPDF.php',
 			'src/JeffreyBostoenExtensions/Reporting/UI/BaseDownloadPDF.php',
@@ -58,14 +61,15 @@ SetupWebPage::AddModule(
                 // Default settings
                 //
                 'settings' => array(
-					// Module specific settings go here, if any
-					// This is a demo configuration for a Windows system
-					'browsershot' => array(
-						'node_binary' => 'node.exe', // Directory with node binary is in an environmental variable
-						'npm_binary' => 'npm.cmd', // Directory with NPM cmd file is in an environmental variable
-						'chrome_path' => 'C:/progra~1/Google/Chrome/Application/chrome.exe', // Path including a Chrome browser executable
-						'ignore_https_errors' => false, // Set to "true" if using invalid or self signed certificates
-					)
+                        // Module specific settings go here, if any
+                        // This is a demo configuration for a Windows system
+                        'trace_log' => true,
+                        'browsershot' => array(
+                                'node_binary' => 'node.exe', // Directory with node binary is in an environmental variable
+                                'npm_binary' => 'npm.cmd', // Directory with NPM cmd file is in an environmental variable
+                                'chrome_path' => 'C:/progra~1/Google/Chrome/Application/chrome.exe', // Path including a Chrome browser executable
+                                'ignore_https_errors' => false, // Set to "true" if using invalid or self signed certificates
+                        )
                 ),
         )
 );

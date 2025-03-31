@@ -15,12 +15,32 @@ namespace JeffreyBostoenExtensions\Reporting\Processor;
 interface iBase {
 	
 	/**
-	 * Whether or not this report processor is applicable.
+	 * Whether or not this report processor is applicable. By default, a processor is NOT applicable!
 	 *
 	 * @return bool
 	 */
 	public static function IsApplicable() : bool;
+
+	/**
+	 * This method is executed before the data is fetched (queried).  
+	 * A common use case is to optimize the columns that need to be fetched.
+	 *
+	 * @return void
+	 */
+	public static function BeforeFetch() : void;
 	
+	/**
+	 * After the data is enriched; the report processor is executed.  
+	 * The last report processor should have output. 
+	 * 
+	 * This should return 'false' if any other following processors should be skipped.
+	 *
+	 * @param array $aReportData Report data.
+	 * @return bool
+	 *
+	 */
+	public static function DoExec($aReportData) : bool;
+
 	/**
 	 * After querying, the data can be enriched.  
 	 * 
@@ -36,31 +56,19 @@ interface iBase {
 	 */
 	public static function EnrichData(&$aReportData) : void;
 	
-	/**
-	 * After the data is enriched; the report processor is executed.  
-	 * The last report processor should have output. 
-	 * 
-	 * This should return 'false' if any other following processors should be skipped.
-	 *
-	 * @param array $aReportData Report data.
-	 * @return bool
-	 *
-	 */
-	public static function DoExec($aReportData) : bool;
 
 	/**
-	 * This method is executed before the data is fetched (queried).  
-	 * A common use case is to optimize the columns that need to be fetched.
+	 * Returns the rank (lower = executed first).
 	 *
-	 * @return void
+	 * @return int
 	 */
-	public static function BeforeFetch() : void;
+	public static function GetRank(): int;
 
 }
 
 
 /**
- * Class ReportProcessor. A class that implements the iBase interface. This base class can used as a parent for any other processors.
+ * Class Base. A class that implements the iBase interface. This base class can used as a parent for any other processors.
  */
 abstract class Base implements iBase {
 	
@@ -89,7 +97,6 @@ abstract class Base implements iBase {
 	 */
 	public static function IsApplicable() : bool {
 		
-		// This parent class should not be applicable.
 		return false;
 		
 	}
@@ -109,6 +116,15 @@ abstract class Base implements iBase {
 		
 		return true;
 		
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public static function GetRank() : int {
+
+		return static::$iRank;
+
 	}
 	
 }

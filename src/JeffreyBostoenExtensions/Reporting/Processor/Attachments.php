@@ -62,7 +62,6 @@ abstract class Attachments extends Base {
 		
 		/** @var DBObjectSet|null $oSet_Objects iTop objects. */
 		$oSet_Objects = Helper::GetObjectSet();
-		$oSet_Objects->Rewind();
 
 		// Get keys to build one OQL Query
 		$aKeys = [ -1];

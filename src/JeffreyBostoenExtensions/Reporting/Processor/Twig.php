@@ -10,22 +10,19 @@ namespace JeffreyBostoenExtensions\Reporting\Processor;
 
 use JeffreyBostoenExtensions\Reporting\Helper;
 
-// Generic
+// Generic.
 use Exception;
 
-// iTop internals
+// iTop internals.
 use ApplicationContext;
 use ApplicationException;
 use DBObjectSet;
 use Dict;
-use stdClass;
 use utils;
 
-// chillerlan
-use chillerlan\QRCode\Common\EccLevel;
-use chillerlan\QRCode\Output\QROutputInterface;
-use chillerlan\QRCode\QROptions;
-use chillerlan\QRCode\QRCode;
+// Twig.
+use Twig\{Environment, TwigFilter};
+use Twig\Loader\FilesystemLoader;
 
 /**
  * Class Twig.  
@@ -53,8 +50,8 @@ abstract class Twig extends Base {
 		
 			$oReport = static::GetReportFromTwigTemplate($aReportData);
 			
-			Helper::SetHeader('Content-Type', $oReport->mimeType);
-			Helper::AddOutput($oReport->content);
+			Helper::SetHeader('Content-Type', $oReport->sMimeType);
+			Helper::AddOutput($oReport->sContent);
 		
 		}
 		catch(Exception $e) {
@@ -143,84 +140,57 @@ abstract class Twig extends Base {
 	/**
 	 * Returns content (HTML, XML, ...) of report.
 	 * 
-	 * By design, that's all it does; as the content may be displayed immediately or used for other purposes (e.g. to convert to PDF).
+	 * By design, that's all it does; as the content may be displayed immediately or used for other purposes (e.g. to convert to PDF later).
 	 *
-	 * @param Array $aReportData Hashtable
+	 * @param array $aReportData Hashtable
 	 *
-	 * @return stdClass Properties: 'content' and 'mimeType' (suggested based on file extension).
+	 * @return Report
 	 */
-	public static function GetReportFromTwigTemplate($aReportData = []) : stdClass {
-		
-		// If class doesn't exist, fail silently
-		if(class_exists('\Twig\Loader\FilesystemLoader') == false) {
-			throw new ApplicationException('The correct version of Twig does not seem to be configured or installed properly.');
-		}
+	public static function GetReportFromTwigTemplate($aReportData = []) : Report {
 		
 		$sReportFile = static::GetReportFileName();
 
 		// - Generate report.
 			
-			// Twig Loader
-			// $loader = new \Twig\Loader\FilesystemLoader(dirname($sReportFile));
+			// - Twig Loader.
 			// Expose entire 'extensions' (env-xxx) directory so it's possible to include Twig templates
-			$loader = new \Twig\Loader\FilesystemLoader(APPROOT.'env-'.utils::GetCurrentEnvironment());
+			// introduced by other iTop extensions (e.g. extra reports).
 			
-			// Twig environment options
-			$oTwigEnv = new \Twig\Environment($loader, [
-				'autoescape' => false,
-				'cache' => false // No cache is default; but enforce!
-			]);
-
-			$oTwigEnv->addFilter(new \Twig\TwigFilter('make_object_url', function ($sObjClass, $sObjKey) {
-					return ApplicationContext::MakeObjectUrl($sObjClass, $sObjKey, null, false);
-				})
-			);
-
-			// Combodo uses this filter, so let's use it the same way for our report generator
-			$oTwigEnv->addFilter(new \Twig\TwigFilter('dict_s', function ($sStringCode, $sDefault = null, $bUserLanguageOnly = false) {
-					return Dict::S($sStringCode, $sDefault, $bUserLanguageOnly);
-				})
-			);
+				$oLoader = new FilesystemLoader(APPROOT.'env-'.utils::GetCurrentEnvironment());
 			
-			// Relies on chillerlan/php-qrcode; optionally.
-			if(class_exists('chillerlan\QRCode\QRCode') == true) {
+			// - Twig environment options.
 				
-				$oTwigEnv->addFilter(new \Twig\TwigFilter('qr', function ($sString) {
-					
-						// Suppress empty attributes.
-						if($sString == '') {
-							return '';
+				$oTwigEnv = new Environment($oLoader, [
+					'autoescape' => false,
+					'cache' => false // No cache is default; but enforce!
+				]);
+			
+			// - Add Twig filters.
+				
+				Helper::Trace('Build list of processors.');
+
+				foreach(get_declared_classes() as $sClassName) {
+					if(in_array('JeffreyBostoenExtensions\Reporting\Processor\TwigFilter\iBase', class_implements($sClassName))) {
+
+						$bApplicable = $sClassName::IsApplicable();
+
+						Helper::Trace('Twig filter: %1$s , applicable = %2$s', $sClassName, $bApplicable ? 'yes' : 'no');
+
+						if($bApplicable) {
+
+							$oTwigEnv->addFilter(new TwigFilter($sClassName::GetFilterName(), $sClassName::GetFilterFunction()));
+							
 						}
 
-						$aOptions = new QROptions([
-							'version'    => 5,
-							'eccLevel'   => EccLevel::L,
-							'outputType' => QROutputInterface::GDIMAGE_PNG,
-							'scale'		 => 3 // Note: scale is for SVG, IMAGE_*. output. Irrelevant for HTML output; use CSS
-						]);
+					}
+				}
 
-						// Invoke a fresh QRCode instance.
-						$oQRCode = new QRCode($aOptions);
-
-						// Dump the output .
-						return '<img class="qr" src="'.$oQRCode->render($sString).'">';
-				
-					})
-				);
-					
-			}
-			else {
-				
-				$oTwigEnv->addFilter(new \Twig\TwigFilter('qr', function ($sString) {
-					return $sString.' (PHP Library chillerlan\QRCode\QRCode missing)';
-				}));
-					
-			}
 			
 			$sHTML = $oTwigEnv->render($sReportFile, $aReportData);
 			
-			// When using different environments (usually stored in $_SESSION but it can be called with switch_env), a more complete URL is needed for some renderers (e.g. ReportProcessorTwigToPDF)
-			// Example of inline image: https://127.0.0.1:8182/iTop/web/pages/ajax.document.php?operation=download_inlineimage&id=12&s=8fb03e"
+			// When using different environments (usually stored in $_SESSION but it can be called with switch_env), 
+			// a more complete URL is needed for some renderers (e.g. ReportProcessorTwigToPDF)
+			// Example of inline image: https://localhost:8182/iTop/web/pages/ajax.document.php?operation=download_inlineimage&id=12&s=8fb03e"
 			$sNeedle = '/web/pages/ajax.document.php?operation=download_inlineimage';
 			$sHTML = str_replace($sNeedle, $sNeedle.'&switch_env='.utils::GetCurrentEnvironment(), $sHTML);
 		
@@ -244,13 +214,11 @@ abstract class Twig extends Base {
 			
 		// - Build object.
 		
-			$oObject = new stdClass;
-			$oObject->content = $sHTML;
-			$oObject->mimeType = $aExtensionsToContentTypes[$sReportFileExtension] ?? '';
+			$oReport = new Report($sHTML, $aExtensionsToContentTypes[$sReportFileExtension] ?? '');
 
 		// - Return.
 
-		return $oObject;
+		return $oReport;
 
 		
 	}

@@ -16,7 +16,7 @@ use DBObject;
 use DBObjectSearch;
 use DBObjectSet;
 use MetaModel;
-use RestResultWithObjects;
+use ObjectResult;
 use UserRights;
 use utils;
 
@@ -52,7 +52,7 @@ abstract class Helper {
 	private static $oSet_Objects = null;
 
 	/**
-	 * Returns an optimized set of attribute codes for the current filter.
+	 * Returns an optimized set of attribute codes for the current OQL filter.
 	 * 
 	 * @param string $sClassName Class name (Can be different from the main set!).
 	 *
@@ -80,6 +80,8 @@ abstract class Helper {
 	 * @param DBObjectSet $oObjectSet iTop object set.
 	 *
 	 * @return array Each key is 'Class::ID' (the class being the common ancestor of the object set), with the value being an array (REST/JSON API structure).
+	 * 
+	 * @deprecated
 	 */
 	public static function ObjectSetToArray(DBObjectSet $oObjectSet) : array {
 		
@@ -100,36 +102,96 @@ abstract class Helper {
 	}
 
 	/**
-	 * Returns array (similar to iTop REST/JSON) from object.
+	 * Converts an iTop object set (DBObjectSet) to an array of iTop REST/JSON API-like objects (ObjectResult).
+	 *
+	 * @param DBObjectSet $oSet
+	 * 
+	 * @return ObjectResult[]
+	 */
+	public static function ConvertDBObjectSetToObjectResultArray(DBObjectSet $oSet) : array {
+
+		$aObjectResults = [];
+
+		static::Trace('Convert object set to array of ObjectResult objects.');
+
+		$oSet->Rewind();
+		while($oObj = $oSet->Fetch()) {
+
+			$aObjectResults[$oObj::class.'::'.$oObj->GetKey()] = static::ConvertDBObjectToObjectResult($oObj);
+
+		}
+
+		return $aObjectResults;
+
+	}
+
+	/**
+	 * Converts an iTop object to an iTop REST/JSON API-like object (ObjectResult).
 	 *
 	 * @param DBObject $oObject iTop object.
 	 *
-	 * @return array REST/JSON API structure.
+	 * @return ObjectResult
+	 * 
+	 * @details Hint: Use static::SetOptimizedAttCodes() to limit the outputted fields / tweak performance.
 	 */
-	public static function ObjectToArray(DBObject $oObject) : array {
+	public static function ConvertDBObjectToObjectResult(DBObject $oObject) : ObjectResult {
 
-		static::Trace('Convert %1$s to API RestResult.', $oObject::class.'::'.$oObject->GetKey());
-		
-		$aOptimizedAttCodes = static::GetAttributesToOutputForFilter($oObject::class);
+		$sClass = $oObject::class;
+
+		static::Trace('Convert %1$s to API RestResult.', $sClass.'::'.$oObject->GetKey());
+
+		$aOptimizedAttCodes = static::GetAttributesToOutputForFilter($sClass);
 
 		static::Trace('Optimized attribute codes: %1$s', json_encode($aOptimizedAttCodes, JSON_PRETTY_PRINT));
 
-		$oResult = new RestResultWithObjects();
-		$oResult->AddObject(0, '', $oObject, $aOptimizedAttCodes);
-		
-		if(is_null($oResult->objects) == true) {
-			return [];
+		$oObjRes = new ObjectResult($sClass, $oObject->GetKey());
+		$oObjRes->code = 0;
+		$oObjRes->message = '';
+
+		$aFields = null;
+		if(!is_null($aOptimizedAttCodes)) {
+
+			// Enum all classes in the hierarchy, starting with the current one
+			foreach(MetaModel::EnumParentClasses($sClass, ENUM_PARENT_CLASSES_ALL, false) as $sRefClass) {
+
+				if (array_key_exists($sRefClass, $aOptimizedAttCodes)) {
+					$aFields = $aOptimizedAttCodes[$sRefClass];
+					break;
+				}
+			}
 		}
-		else {
-			
-			$sJSON = json_encode($oResult->objects);
-			
-			// Fix #1897 AttributeText (HTML): GetForJSON() -> GetEditValue() -> escaping of '&'
-			$sJSON = str_replace('&amp;', '&', $sJSON);
-			
-			return current(json_decode($sJSON, true));
+
+		if (is_null($aFields)) {
+			// No fieldspec given, or not found...
+			$aFields = array('id', 'friendlyname');
 		}
+
+		foreach ($aFields as $sAttCode) {
+			$oObjRes->AddField($oObject, $sAttCode, false);
+		}
+
+		return $oObjRes;
 		
+	}
+
+
+	/**
+	 * Converts a DBObject to an associative array (iTop REST/JSON API-like structure).
+	 *
+	 * @return array
+	 * 
+	 * @deprecated
+	 */
+	public static function ObjectToArray(DBObject $oDBObject) : array {
+
+		$oObjRes = static::ConvertDBObjectToObjectResult($oDBObject);
+		$sJSON = json_encode($oObjRes);
+		
+		// Fix #1897 AttributeText (HTML): GetForJSON() -> GetEditValue() -> escaping of '&'
+		$sJSON = str_replace('&amp;', '&', $sJSON);
+		
+		return json_decode($sJSON, true);
+
 	}
 	
 	/**
@@ -161,8 +223,10 @@ abstract class Helper {
 			
 			// Sort based on 'rank' of each class
 			// Use case: block further processing
-			usort($aReportProcessors, function($a, $b) {
-				return $a::$iRank <=> $b::$iRank;
+			usort($aReportProcessors, function(string $a, string $b) {
+
+				return $a::GetRank() <=> $b::GetRank();
+
 			});
 
 			static::Trace('Processors: %1$s', implode(', ', $aReportProcessors));
@@ -317,6 +381,9 @@ abstract class Helper {
 	 */
 	public static function GetObjectSet() : DBObjectSet{
 
+		// In most cases, rewinding is advised anyway.
+		static::$oSet_Objects->Rewind();
+		
 		return static::$oSet_Objects;
 		
 	}
@@ -523,6 +590,8 @@ abstract class Helper {
 
 	/**
 	 * Sets the optimized attribute codes.
+	 * 
+	 * Specifying a limited list of attribute codes is a major performance tweak for larger data sets when relying on an OQL filter that is passed from iTop.
 	 *
 	 * @param array $aOptimizedAttCodes The key should refer to a class (alias) in an OQL query; the value is an array of attribute codes.
 	 * @return void
