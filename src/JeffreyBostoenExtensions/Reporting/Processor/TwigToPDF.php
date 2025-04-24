@@ -252,21 +252,43 @@ abstract class TwigToPDF extends Twig {
 				}
 				
 				// Send request.
-				$sResponse = curl_exec($ch);
+				$response = curl_exec($ch);
+				
+				$iError = curl_errno($ch);
+				$sErrorMsg = curl_error($ch);
+
+				// Attempt to catch errors. E.g. timeout, or port blocked, ...
+				if($iError) {
+
+					$sErrorMsg = match ($iError) {
+						CURLE_OPERATION_TIMEOUTED => 'The request timed out.',
+						CURLE_COULDNT_CONNECT => 'Could not connect. Connection possibly blocked or DNS issue.',
+						CURLE_COULDNT_RESOLVE_HOST => 'Could not resolve host. Most likely a DNS issue.',
+						default => $sErrorMsg // Return original message.
+					};
+					
+					// For all other cases, including the above:
+					Helper::Trace('cURL error, code: %1$s, error message: %2$s', $iError, $sErrorMsg);
+					throw new Exception(sprintf('cURL error, code: %1$s, error message: %2$s', $iError, $sErrorMsg));
+					
+				}
+				
+				// Attempt to catch HTTP status codes.
 				$iHttpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 				
 				
 				if($iHttpStatus != 200) {
+					Helper::Trace('Invalid HTTP response code: %1$s, error: %2$s', $iHttpStatus, curl_error($ch));
 					throw new Exception('Invalid HTTP response code: '.$iHttpStatus.', '.curl_error($ch));
 				}
 				
 				curl_close($ch);
 				
 				// Process response.
-				$oData = json_decode($sResponse);
+				$oData = json_decode($response);
 				
 				if(json_last_error() !== JSON_ERROR_NONE) {
-					throw new Exception('Invalid JSON structure: '.$sResponse);
+					throw new Exception('Invalid JSON structure: '.$response);
 				}
 				
 				if($oData->error != 0) {
