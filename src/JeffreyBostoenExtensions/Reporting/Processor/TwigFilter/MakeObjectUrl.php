@@ -3,7 +3,7 @@
 /**
  * @copyright   Copyright (c) 2019-2025 Jeffrey Bostoen
  * @license     https://www.gnu.org/licenses/gpl-3.0.en.html
- * @version     3.2.250213
+ * @version     3.2.250504
  */
 
 namespace JeffreyBostoenExtensions\Reporting\Processor\TwigFilter;
@@ -22,7 +22,8 @@ abstract class MakeObjectUrl extends Base {
      */
     public static function GetFilterFunction() : callable {
 
-        $callable = function ($sObjClass, $sObjKey) {
+        $callable = function($sObjClass, $sObjKey) {
+
             return ApplicationContext::MakeObjectUrl($sObjClass, $sObjKey, null, false);
         };
 

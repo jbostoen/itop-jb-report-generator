@@ -3,6 +3,37 @@
 While backward compatibility is important, it's unfortunately not always feasible to improve this extension and not break things.  
 Here, you'll find useful info when coming from an older version.
 
+### Upgrade to 2025-04-28
+
+While not deprecated yet; it's no longer recommended to use the previous `lib.x` variables to include CSS or JavaScript.
+
+Two new Twig filers have been added, to generate `link` tags for stylesheets and `script` tags for JavaScript files (including an integrity attribute).
+
+Instead, you can now use this generic approach:
+
+```
+"frontend-lib-name"|html_css
+"frontend-lib-name"|html_script
+```
+
+Available pre-bundled libraries:
+
+```
+Bootstrap
+FontAwesome
+Jquery
+```
+
+As of now, the values above are case-sensitive and may differ from how they're usually stylized.
+
+So for example:
+```
+"Bootstrap"|html_css
+"Bootstrap"|html_script
+```
+
+
+
 ### Upgrade to 2025-02-10
 
 `namespace JeffreyBostoenExtensions\ReportGenerator;`

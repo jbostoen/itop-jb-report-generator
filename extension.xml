@@ -5,8 +5,8 @@
 	<author><![CDATA[jbostoen]]></author>
 	<label><![CDATA[Feature: Report generator]]></label>
 	<description><![CDATA[Quickly add new reports on object details in a generic way.]]></description>
-	<version>3.2.250213</version>
-	<release_date>2025-02-13</release_date>
+	<version>3.2.250504</version>
+	<release_date>2025-05-04</release_date>
 	<version_description><![CDATA[]]></version_description>
 	<itop_version_min>3.2.0</itop_version_min>
 	<status>stable</status>

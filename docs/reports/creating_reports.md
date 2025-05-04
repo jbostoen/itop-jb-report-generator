@@ -103,12 +103,6 @@ The following variables are available to use in the reports:
 * ```itop.reporting_url```: The URL pointing to the "reporting.php" file; containing the default parameters.
 * ```itop.root_url```: iTop root URL.
 
-**Popular frameworks**
-
-* ```lib.bootstrap.css```: URL to CSS for Twitter BootStrap.
-* ```lib.bootstrap.js```: URL to JavaScript for Twitter BootStrap.
-* ```lib.jquery.js```: URL to JavaScript for jQuery.
-
 
 # Twig filters
 
@@ -136,6 +130,25 @@ It's possible to generate an object URL (to the iTop object's details page) with
 
 ```
 {{ item.key|make_object_url(item.class) }}
+```
+
+## Popular frameworks
+
+
+These come pre-bundled.
+
+
+| Front end library          | CSS | JavaScript |
+|--------------------------- | ---------------  |
+| Bootstrap                  | Yes | Yes        |
+| FontAwesome                | Yes | No         |
+| Jquery                     | No  | Yes        |
+
+Usage:
+
+```
+"Bootstrap"|html_css
+"Bootstrap"|html_script
 ```
 
 

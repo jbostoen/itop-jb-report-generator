@@ -1,9 +1,9 @@
 <?php
 
 /**
- * @copyright   Copyright (c) 2019-2024 Jeffrey Bostoen
+ * @copyright   Copyright (c) 2019-2025 Jeffrey Bostoen
  * @license     https://www.gnu.org/licenses/gpl-3.0.en.html
- * @version     2.7.240425
+ * @version     3.2.250504
  */
 
  namespace JeffreyBostoenExtensions\Reporting;
@@ -244,9 +244,11 @@ abstract class Helper {
 		// - Convert DBObjectSet to REST/JSON API array structure to use in templates.
 		// Note: This performs the first fetch!
 			
-			static::Trace('Convert object(s) to REST/JSON structure.');
+			$aReportData = [];
 
 			if(static::$oSet_Objects !== null) {
+
+				static::Trace('Convert object(s) to REST/JSON structure.');
 
 				static::Trace('There are %1$s objects in the set.', static::$oSet_Objects->Count());
 
@@ -254,7 +256,7 @@ abstract class Helper {
 					static::Trace('Query optimization: %1$s', json_encode(static::$aOptimizedAttCodes));
 				}
 				
-				$aSet_Objects = static::ObjectSetToArray(static::$oSet_Objects);
+				$aSet_Objects = static::ConvertDBObjectSetToObjectResultArray(static::$oSet_Objects);
 				
 				if(static::GetView() == 'details') {
 					$aReportData['item'] = array_values($aSet_Objects)[0];
@@ -279,7 +281,7 @@ abstract class Helper {
 			
 			// Expose some variables so they can be used in reports
 			$aReportData = array_merge_recursive($aReportData, [
-				'current_contact' => static::ObjectToArray(UserRights::GetUserObject()),
+				'current_contact' => static::ConvertDBObjectToObjectResult(UserRights::GetUserObject()),
 				'request' => $_REQUEST,
 				'application' => [
 					'url' => MetaModel::GetConfig()->Get('app_root_url'),
@@ -296,7 +298,7 @@ abstract class Helper {
 						'&exec_env='.utils::GetCurrentEnvironment()
 				],
 
-				// Included common libraries.
+				// Included common libraries (deprecated).
 				'lib' => [
 					'bootstrap' => [
 						'js' => $sModuleUrl.'/vendor/twbs/bootstrap/dist/js/bootstrap.min.js',
@@ -377,12 +379,16 @@ abstract class Helper {
 	/**
 	 * Gets iTop object set (currently being processed).
 	 *
-	 * @return DBObjectSet
+	 * @return DBObjectSet|null
 	 */
-	public static function GetObjectSet() : DBObjectSet{
+	public static function GetObjectSet() : DBObjectSet|null {
 
-		// In most cases, rewinding is advised anyway.
-		static::$oSet_Objects->Rewind();
+		if(static::$oSet_Objects !== null) {
+
+			// In most cases, rewinding is advised anyway.
+			static::$oSet_Objects->Rewind();
+
+		}
 		
 		return static::$oSet_Objects;
 		

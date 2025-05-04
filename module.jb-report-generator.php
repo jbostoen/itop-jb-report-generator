@@ -3,14 +3,14 @@
 /**
  * @copyright   Copyright (c) 2019-2025 Jeffrey Bostoen
  * @license     https://www.gnu.org/licenses/gpl-3.0.en.html
- * @version     3.2.250213
+ * @version     3.2.250504
  *
  * iTop module definition file
  */
  
 SetupWebPage::AddModule(
         __FILE__, // Path to the current file, all other file names are relative to the directory containing this file
-        'jb-report-generator/3.2.250213',
+        'jb-report-generator/3.2.250504',
         array(
                 // Identification
                 //
@@ -30,12 +30,18 @@ SetupWebPage::AddModule(
 			// 'model.jb-report-generator.php',
 			// 'vendor/autoload.php', Note: this Twig version is not compatible with iTop 3.0? So don't add this here, as it will crash the setup.
 			'src/JeffreyBostoenExtensions/Reporting/Helper.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/FrontendLib/Base.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/FrontendLib/Bootstrap.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/FrontendLib/FontAwesome.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/FrontendLib/Jquery.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/Base.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/Attachments.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/Twig.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigToPDF.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/Base.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/DictS.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/HtmlCss.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/HtmlScript.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/MakeObjectUrl.php',
 			'src/JeffreyBostoenExtensions/Reporting/UI/Base.php',
 			'src/JeffreyBostoenExtensions/Reporting/UI/BaseAttachPDF.php',
