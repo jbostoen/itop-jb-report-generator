@@ -32,7 +32,7 @@ abstract class BaseShowPDF extends Base {
 	*/
 	public static function GetURLParameters() : array {		
 	
-		return array_merge(static::GetSpecificURLParameters(), [
+		return array_merge(parent::GetURLParameters(), [
 			'action' => 'show_pdf',
 		]);
 		

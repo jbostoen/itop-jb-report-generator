@@ -43,6 +43,7 @@ SetupWebPage::AddModule(
 			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/HtmlCss.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/HtmlScript.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/MakeObjectUrl.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/QR.php',
 			'src/JeffreyBostoenExtensions/Reporting/UI/Base.php',
 			'src/JeffreyBostoenExtensions/Reporting/UI/BaseAttachPDF.php',
 			'src/JeffreyBostoenExtensions/Reporting/UI/BaseDownloadPDF.php',

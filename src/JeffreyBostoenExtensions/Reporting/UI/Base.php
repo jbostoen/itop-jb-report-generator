@@ -52,19 +52,11 @@ interface iBase {
 	public static function GetTitle() : string;
 	
 	/**
-	 * URL Parameters.  
-	 * This function should NOT be overruled when creating a leaf class.
+	 * Returns the URL Parameters.
 	 * 
 	 * @return array
 	 */
 	public static function GetURLParameters() : array;
-	
-	/**
-	 * URL Parameters that are specific for the leaf class.
-	 * 
-	 * @return array
-	 */
-	public static function GetSpecificURLParameters() : array;
 	
 	/**
 	 * Whether this extension is applicable. By default, the UI element is NOT applicable!
@@ -124,16 +116,9 @@ abstract class Base implements iBase {
 	 * @inheritDoc
 	 */
 	public static function GetURLParameters() : array {
-		return [];
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public static function GetSpecificURLParameters() : array {
 
 		return [];
-		
+
 	}
 	
 	/**

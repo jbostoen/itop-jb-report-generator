@@ -167,7 +167,7 @@ abstract class Twig extends Base {
 			
 			// - Add Twig filters.
 				
-				Helper::Trace('Build list of processors.');
+				Helper::Trace('Build list of Twig filters.');
 
 				foreach(get_declared_classes() as $sClassName) {
 					if(in_array('JeffreyBostoenExtensions\Reporting\Processor\TwigFilter\iBase', class_implements($sClassName))) {
