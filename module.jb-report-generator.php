@@ -36,6 +36,7 @@ SetupWebPage::AddModule(
 			'src/JeffreyBostoenExtensions/Reporting/Processor/FrontendLib/Jquery.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/Base.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/Attachments.php',
+			'src/JeffreyBostoenExtensions/Reporting/Processor/Report.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/Twig.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigToPDF.php',
 			'src/JeffreyBostoenExtensions/Reporting/Processor/TwigFilter/Base.php',

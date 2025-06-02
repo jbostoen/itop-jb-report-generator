@@ -377,7 +377,7 @@ abstract class Helper {
 	}
 
 	/**
-	 * Gets iTop object set (currently being processed).
+	 * Gets the rewinded iTop object set (currently being processed).
 	 *
 	 * @return DBObjectSet|null
 	 */

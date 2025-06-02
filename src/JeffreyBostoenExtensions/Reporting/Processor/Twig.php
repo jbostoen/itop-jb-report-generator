@@ -67,10 +67,15 @@ abstract class Twig extends Base {
 	
 	/**
 	 * Returns default filename of report.
-	 * The current implementation expects the reports to be in the module's directory as 'reports/templates/className/type/templateName.ext'; 
+	 * 
+	 * Behavior:
+	 * - A "template" parameter should specify the relative path to the module's directory ("reportdir" parameter).
+	 * 
+	 * Legacy behavior (deprecated):
+	 * This expects the reports to be in the module's directory as '<moduleDir>/reports/templates/<className>/<viewType>/templateName.ext'; 
 	 * where 
 	 *  "className" is an iTop class and 
-	 *  "type" is usually "details" or "list"
+	 *  "viewType" is usually "details" or "list"
 	 *  "templateName.ext" is free to choose
 	 *
 	 *
@@ -78,7 +83,6 @@ abstract class Twig extends Base {
 	 */
 	public static function GetReportFileName() : string {
 		
-		$sView = Helper::GetView();
 
 		$sTemplateName = utils::ReadParam('template', '', false, 'string');
 		
@@ -107,7 +111,7 @@ abstract class Twig extends Base {
 				$sReportFileAlternative = sprintf('%1$s/reports/templates/%2$s/%3$s/%4$s',
 					$sReportModuleDir,
 					$sClassName,
-					$sView,
+					Helper::GetView(),
 					$sTemplateName
 			)	;
 				
