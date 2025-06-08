@@ -75,35 +75,37 @@ abstract class Attachments extends Base {
 		$oFilter_Attachments->AddCondition('item_id', $aKeys, 'IN');
 		$oFilter_Attachments->AddCondition('item_class', $oSet_Objects->GetClass());
 		$oSet_Attachments = new CMDBObjectSet($oFilter_Attachments);
+		$aObjResAttachments = Helper::ConvertDBObjectSetToObjectResultArray($oSet_Attachments);
 		
 		// In case of 'list':
 		if(isset($aReportData['items']) == true) {
-			foreach($aReportData['items'] as &$aObject) {
+
+			/** @var ObjectResult $oObjRes */
+			foreach($aReportData['items'] as $oObjRes) {
 				
 				// Attachments are linked to one object only.
 				// So it's okay to just convert it here when needed.
-				$oSet_Attachments->Rewind();
-				
-				while($oAttachment = $oSet_Attachments->Fetch()) {
-					$aObject['attachments'][] = Helper::ObjectToArray($oAttachment);
-				}
+				$oObjRes->attachments = array_filter($aObjResAttachments, function(ObjectResult $oObjResAtt) {
+					return $oObjResAtt->fields->item_id == $oObjRes->fields->id;
+				});
 				
 			}
 		}
 
 		// In case of 'details':
-		if(isset($aReportData['item']) == true) {
+		elseif(isset($aReportData['item']) == true) {
+
+			/** @var ObjectResult $oObjRes */
+			$oObjRes = $aReportData['item'];
 
 			// Attachments are linked to one object only.
 			// So it's okay to just convert it here when needed.
-			$oSet_Attachments->Rewind();
-			
-			while($oAttachment = $oSet_Attachments->Fetch()) {
-				$aReportData['item']['attachments'][] = Helper::ObjectToArray($oAttachment);
-			}
+			$oObjRes->attachments = array_filter($aObjResAttachments, function(ObjectResult $oObjResAtt) {
+				return $oObjResAtt->fields->item_id == $oObjRes->fields->id;
+			});
 
 		}
 	
-	}
+	}}
 	
 }
