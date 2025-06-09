@@ -14,6 +14,7 @@ use JeffreyBostoenExtensions\Reporting\Helper;
 use CMDBObjectSet;
 use DBObjectSearch;
 use DBObjectSet;
+use ObjectResult;
 use utils;
 
 
@@ -85,8 +86,8 @@ abstract class Attachments extends Base {
 				
 				// Attachments are linked to one object only.
 				// So it's okay to just convert it here when needed.
-				$oObjRes->attachments = array_filter($aObjResAttachments, function(ObjectResult $oObjResAtt) {
-					return $oObjResAtt->fields->item_id == $oObjRes->fields->id;
+				$oObjRes->attachments = array_filter($aObjResAttachments, function(ObjectResult $oObjResAtt) use ($oObjRes) {
+					return $oObjResAtt->fields['item_id'] == $oObjRes->key;
 				});
 				
 			}
@@ -100,12 +101,12 @@ abstract class Attachments extends Base {
 
 			// Attachments are linked to one object only.
 			// So it's okay to just convert it here when needed.
-			$oObjRes->attachments = array_filter($aObjResAttachments, function(ObjectResult $oObjResAtt) {
-				return $oObjResAtt->fields->item_id == $oObjRes->fields->id;
+			$oObjRes->attachments = array_filter($aObjResAttachments, function(ObjectResult $oObjResAtt) use ($oObjRes) {
+				return $oObjResAtt->fields['item_id'] == $oObjRes->key;
 			});
 
 		}
 	
-	}}
+	}
 	
 }
