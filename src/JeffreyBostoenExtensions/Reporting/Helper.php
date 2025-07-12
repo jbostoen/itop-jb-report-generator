@@ -62,11 +62,13 @@ abstract class Helper {
 
 		// Already specified by a processor?
 		// If during enriching another class is called; this may need different optimization.
-		if(count(static::$aOptimizedAttCodes) == 0 || !isset(static::$aOptimizedAttCodes[$sClassName])) {
+		if(!isset($sClassName, static::$aOptimizedAttCodes)) {
 
-			foreach(array_keys(MetaModel::ListAttributeDefs($sClassName)) as $sAttCode) {
-				static::$aOptimizedAttCodes[$sClassName][] = $sAttCode;
-			}
+			static::Trace('Reverting to default attribute codes for class %1$s.', $sClassName);
+			static::Trace('Only these classes were available: %1$s', implode(', ', array_keys(static::$aOptimizedAttCodes)));
+
+			static::$aOptimizedAttCodes[$sClassName][] = array_keys(MetaModel::ListAttributeDefs($sClassName));
+
 
 		}
 		
@@ -149,17 +151,17 @@ abstract class Helper {
 		$oObjRes->message = '';
 
 		$aFields = null;
-		if(!is_null($aOptimizedAttCodes)) {
+	
 
-			// Enum all classes in the hierarchy, starting with the current one
-			foreach(MetaModel::EnumParentClasses($sClass, ENUM_PARENT_CLASSES_ALL, false) as $sRefClass) {
+		// Enum all classes in the hierarchy, starting with the current one
+		foreach(MetaModel::EnumParentClasses($sClass, ENUM_PARENT_CLASSES_ALL, false) as $sRefClass) {
 
-				if (array_key_exists($sRefClass, $aOptimizedAttCodes)) {
-					$aFields = $aOptimizedAttCodes[$sRefClass];
-					break;
-				}
+			if (isset($sRefClass, $aOptimizedAttCodes)) {
+				$aFields = $aOptimizedAttCodes[$sRefClass];
+				break;
 			}
 		}
+		
 
 		if (is_null($aFields)) {
 			// No fieldspec given, or not found...
@@ -603,6 +605,8 @@ abstract class Helper {
 	 * @return void
 	 */
 	public static function SetOptimizedAttCodes(array $aOptimizedAttCodes) : void {
+
+		static::Trace('Set optimized attribute codes: %1$s', json_encode($aOptimizedAttCodes, JSON_PRETTY_PRINT));
 
 		static::$aOptimizedAttCodes = $aOptimizedAttCodes;
 

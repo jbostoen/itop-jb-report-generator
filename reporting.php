@@ -55,9 +55,7 @@ use Exception;
 
 		
 		// Logging in exposed :current_contact_id in OQL
-		if(LoginWebPage::EXIT_CODE_OK != LoginWebPage::DoLoginEx(null /* any portal */, false, LoginWebPage::EXIT_RETURN)) {
-			throw new SecurityException('You must be logged in');
-		}
+			LoginWebPage::DoLoginEx();
 
 		// Okay if this is empty.
 			Helper::SetView(utils::ReadParam('view', '', false, 'string'));
@@ -75,6 +73,13 @@ use Exception;
 	}
 	catch(Exception $e) {
 		
+		if($e instanceof SecurityException) {
+			http_response_code(403);
+		}
+		else {
+			http_response_code(500);
+		}
+
 		$oP = new NiceWebPage(Dict::S('UI:PageTitle:FatalError'));
 		$oP->add("<h1>".Dict::S('UI:FatalErrorMessage')."</h1>");	
 		$oP->add(Dict::Format('UI:Error_Details', $e->getMessage()));	
