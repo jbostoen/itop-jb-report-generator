@@ -45,23 +45,31 @@ abstract class TwigToPDF extends Twig {
 	/**
 	 * @inheritDoc
 	 */
-	public static function DoExec($aReportData) : bool {
+	public static function DoExec() : bool {
 		
 		try {
-			
-			/** @var DBObjectSet|null $oSet_Objects iTop objects. */
-			$oSet_Objects = Helper::GetObjectSet();
+
+			$oReportData = Helper::GetData();
+
+			if(property_exists($oReportData, 'item')) {
+
+				$oItem = $oReportData->item;
+				$sFileName = date('Ymd_His').'_'.$oItem->class.'_'.$oItem->key.'.pdf';
+
+			}
+			elseif(property_exists($oReportData, 'items')) {
+
+				$oItem = $oReportData->items[0];
+				$sFileName = date('Ymd_His').'_'.$oItem->class.'_list.pdf';
+
+			}
 			
 			/** @var Spatie\Browsershot\Browsershot $oPDF PDF Object */
-			$sBase64 = static::GetPDFObject($aReportData);
+			$sBase64 = static::GetPDFObject();
 			$sPDF = base64_decode($sBase64);
 			
 			$sAction = utils::ReadParam('action', '', false, 'string');
-			
-			/** @var DBObject $oObject iTop object */
-			$oObject = $oSet_Objects->Fetch();
 
-			$sFileName = date('Ymd_His').'_'.get_class($oObject).'_'.$oObject->GetKey().'.pdf';
 		
 			switch($sAction) {
 				case 'show_pdf':
@@ -74,17 +82,13 @@ abstract class TwigToPDF extends Twig {
 					
 				case 'attach_pdf':
 				
-					static::AttachToHostObject($sPDF, $sFileName, $oObject);
+					static::AttachToHostObject($sPDF, $sFileName, $oItem->class, $oItem->key);
 					
 					// Go back.
 					$oUrlMaker = new iTopStandardURLMaker();
-					$sUrl = $oUrlMaker->MakeObjectURL($oObject::class, $oObject->GetKey());
+					$sUrl = $oUrlMaker->MakeObjectURL($oItem->class, $oItem->key);
 					
 					Helper::SetHeader('Location', $sUrl);
-					
-					return false;
-					
-					
 					break;
 					
 					
@@ -101,7 +105,7 @@ abstract class TwigToPDF extends Twig {
 
 		}
 
-		return true;
+		return false;
 		
 	}
 
@@ -110,21 +114,22 @@ abstract class TwigToPDF extends Twig {
 	 *
 	 * @param string $sPDF
 	 * @param string $sFileName
-	 * @param DBObject $oObject
+	 * @param string $sObjClass
+	 * @param int $iObjId
 	 * 
 	 * @return Attachment
 	 * 
 	 * @details
 	 * This is split into a standalone function, so it's easy to extend or override.
 	 */
-	public static function AttachToHostObject(string $sPDF, string $sFileName, DBObject $oObject) : Attachment {
+	public static function AttachToHostObject(string $sPDF, string $sFileName, string $sObjClass, int $iObjId) : Attachment {
 
 		// Create attachment.
 		/** @var Attachment $oAttachment */
 		$oAttachment = MetaModel::NewObject('Attachment', [
 			'user_id' => UserRights::GetUserId(),
-			'item_class' => $oObject::class,
-			'item_id' => $oObject->GetKey(),
+			'item_class' => $sObjClass,
+			'item_id' => $iObjId,
 			'creation_date' => date('Y-m-d H:i:s'),
 			'contents' => new ormDocument($sPDF, 'application/pdf', $sFileName)
 		]);
@@ -141,7 +146,7 @@ abstract class TwigToPDF extends Twig {
 	 *
 	 * @return string
 	 */
-	public static function GetPDFObject($aReportData) : string {
+	public static function GetPDFObject() : string {
 		
 		// 
 		try {
@@ -151,7 +156,7 @@ abstract class TwigToPDF extends Twig {
 			Helper::Trace('Mode = %1$s', $sMode);
 
 			// Get HTML for this report.
-			$sHTML = static::GetReportFromTwigTemplate($aReportData)->sContent;
+			$sHTML = static::GetReportFromTwigTemplate()->sContent;
 
 			if($sMode == 'browsershot') {
 			

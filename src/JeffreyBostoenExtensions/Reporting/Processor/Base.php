@@ -35,11 +35,10 @@ interface iBase {
 	 * 
 	 * This should return 'false' if any other following processors should be skipped.
 	 *
-	 * @param array $aReportData Report data.
 	 * @return bool
 	 *
 	 */
-	public static function DoExec($aReportData) : bool;
+	public static function DoExec() : bool;
 
 	/**
 	 * After querying, the data can be enriched.  
@@ -47,14 +46,11 @@ interface iBase {
 	 * For example: calculations can be done, extra info can be added, ...
 	 * 
 	 * This method is only meant for data manipulation; NOT for output.
-	 *
-	 * @param Array $aReportData Report data.  
-	 * This array can be modified; the data will be available in templates.
 	 * 
 	 * @return void
 	 *
 	 */
-	public static function EnrichData(&$aReportData) : void;
+	public static function EnrichData() : void;
 	
 
 	/**
@@ -104,7 +100,7 @@ abstract class Base implements iBase {
 	/**
 	 * @inheritDoc
 	 */
-	public static function EnrichData(&$aReportData) : void {
+	public static function EnrichData() : void {
 		
 		
 	}
@@ -112,7 +108,7 @@ abstract class Base implements iBase {
 	/**
 	 * @inheritDoc
 	 */
-	public static function DoExec($aReportData) : bool {
+	public static function DoExec() : bool {
 		
 		return true;
 		

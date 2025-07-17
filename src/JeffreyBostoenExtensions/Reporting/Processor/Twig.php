@@ -44,11 +44,11 @@ abstract class Twig extends Base {
 	/**
 	 * @inheritDoc
 	 */
-	public static function DoExec($aReportData) : bool {
+	public static function DoExec() : bool {
 		
 		try {
 		
-			$oReport = static::GetReportFromTwigTemplate($aReportData);
+			$oReport = static::GetReportFromTwigTemplate();
 			
 			Helper::SetHeader('Content-Type', $oReport->sMimeType);
 			Helper::AddOutput($oReport->sContent);
@@ -101,7 +101,7 @@ abstract class Twig extends Base {
 		if(file_exists($sReportFile) == false) {
 			
 			/** @var DBObjectSet|null $oSet_Objects */
-			$oSet_Objects = Helper::GetObjectSet();
+			$oSet_Objects = Helper::GetObjectSet(false);
 
 			if($oSet_Objects !== null) {
 
@@ -113,7 +113,7 @@ abstract class Twig extends Base {
 					$sClassName,
 					Helper::GetView(),
 					$sTemplateName
-			)	;
+				);
 				
 				if(file_exists($sReportFileAlternative) == true) {
 					Helper::Trace('Deprecated: Legacy mode for file name: %1$s', $sReportFileAlternative);
@@ -146,11 +146,9 @@ abstract class Twig extends Base {
 	 * 
 	 * By design, that's all it does; as the content may be displayed immediately or used for other purposes (e.g. to convert to PDF later).
 	 *
-	 * @param array $aReportData Hashtable
-	 *
 	 * @return Report
 	 */
-	public static function GetReportFromTwigTemplate($aReportData = []) : Report {
+	public static function GetReportFromTwigTemplate() : Report {
 		
 		$sReportFile = static::GetReportFileName();
 
@@ -190,7 +188,7 @@ abstract class Twig extends Base {
 				}
 
 			
-			$sHTML = $oTwigEnv->render($sReportFile, $aReportData);
+			$sHTML = $oTwigEnv->render($sReportFile,  json_decode(json_encode(Helper::GetData()), true));
 			
 			// When using different environments (usually stored in $_SESSION but it can be called with switch_env), 
 			// a more complete URL is needed for some renderers (e.g. ReportProcessorTwigToPDF)

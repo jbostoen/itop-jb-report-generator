@@ -116,7 +116,7 @@ class Menu implements iPopupMenuExtension {
 		// - Add each UI element.
 
 			/** @var DBObjectSet|null $oSet_Objects Object set. */
-			$oSet_Objects = Helper::GetObjectSet();
+			$oSet_Objects = Helper::GetObjectSet(true);
 
 			foreach($aReports as $sReport) {
 				

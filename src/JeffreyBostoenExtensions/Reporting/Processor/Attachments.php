@@ -59,10 +59,12 @@ abstract class Attachments extends Base {
 	/**
 	 * @inheritDoc
 	 */
-	public static function EnrichData(&$aReportData) : void {
+	public static function EnrichData() : void {
 		
+		$oReportData = Helper::GetData();
+
 		/** @var DBObjectSet|null $oSet_Objects iTop objects. */
-		$oSet_Objects = Helper::GetObjectSet();
+		$oSet_Objects = Helper::GetObjectSet(true);
 
 		// Get keys to build one OQL Query
 		$aKeys = [ -1];
@@ -71,18 +73,23 @@ abstract class Attachments extends Base {
 			$aKeys[] = $oObj->GetKey();
 		}
 		
-		// Retrieve attachments.
-		$oFilter_Attachments = new DBObjectSearch('Attachment');
-		$oFilter_Attachments->AddCondition('item_id', $aKeys, 'IN');
-		$oFilter_Attachments->AddCondition('item_class', $oSet_Objects->GetClass());
-		$oSet_Attachments = new CMDBObjectSet($oFilter_Attachments);
-		$aObjResAttachments = Helper::ConvertDBObjectSetToObjectResultArray($oSet_Attachments);
-		
 		// In case of 'list':
-		if(isset($aReportData['items']) == true) {
+		if(property_exists($oReportData, 'items') && count($oReportData->items) > 0) {
 
-			/** @var ObjectResult $oObjRes */
-			foreach($aReportData['items'] as $oObjRes) {
+			// First get a list of all the IDs.
+
+
+			/** @var stdClass $oObjRes */
+			
+			$aObjIds = array_map(function($oObjRes) {
+				return $oObjRes->key;
+			}, $oReportData->items);
+
+			$sObjClass = $oReportData->items[0]->class;
+			$aObjResAttachments = static::GetAttachments($sObjClass, $aObjIds);
+
+			/** @var stdClass $oObjRes */
+			foreach($oReportData->items as $oObjRes) {
 				
 				// Attachments are linked to one object only.
 				// So it's okay to just convert it here when needed.
@@ -94,19 +101,38 @@ abstract class Attachments extends Base {
 		}
 
 		// In case of 'details':
-		elseif(isset($aReportData['item']) == true) {
+		elseif(property_exists($oReportData, 'item')) {
 
-			/** @var ObjectResult $oObjRes */
-			$oObjRes = $aReportData['item'];
+			/** @var stdClass $oObjRes */
+			$oObjRes = $oReportData->item;
 
 			// Attachments are linked to one object only.
 			// So it's okay to just convert it here when needed.
-			$oObjRes->attachments = array_filter($aObjResAttachments, function(ObjectResult $oObjResAtt) use ($oObjRes) {
-				return $oObjResAtt->fields['item_id'] == $oObjRes->key;
-			});
+			$oObjRes->attachments = static::GetAttachments($oObj->class, [ $oObj->key ]);
 
 		}
 	
+	}
+
+
+	/**
+	 * Returns attachments for the given object IDs.
+	 *
+	 * @param string $sClass iTop class name.
+	 * @param string[] $aObjIds
+	 * @return ObjectResult[]
+	 */
+	private static function GetAttachments(string $sObjClass, array $aObjIds) : array {
+
+		// Retrieve attachments.
+		$oFilter_Attachments = new DBObjectSearch('Attachment');
+		$oFilter_Attachments->AddCondition('item_id', $aObjIds, 'IN');
+		$oFilter_Attachments->AddCondition('item_class', $sObjClass);
+		$oSet_Attachments = new CMDBObjectSet($oFilter_Attachments);
+		
+		return Helper::ConvertDBObjectSetToObjectResultArray($oSet_Attachments);
+		
+
 	}
 	
 }

@@ -8,10 +8,11 @@
 
  namespace JeffreyBostoenExtensions\Reporting;
 
-// Generic
+// Generic.
 use Exception;
+use stdClass;
 
-// iTop internals
+// iTop internals.
 use DBObject;
 use DBObjectSearch;
 use DBObjectSet;
@@ -31,11 +32,22 @@ abstract class Helper {
 	/** @var array $aOptimizedAttCodes The key should be the class; the value is an array of attribute codes. */
 	private static $aOptimizedAttCodes = [];
 	
+	/**
+	 * @var array $aCache An internal cache. The cache is meant to cache data in some custom processing flows.
+	 * 
+	 * - Key: Should be a clear indication of what is being cached.
+	 * - Value: Could be anything.
+	 */
+	private static $aCache = [];
+	
 	/** @var bool $bSuppressOutput Boolean which indicates whether output will be suppressed (and stored internally in the below $aHeaders and $sOutput properties. */
 	private static $bSuppressOutput = false;
 	
 	/** @var array $aHeaders in which PHP headers will be stored if output is suppressed. */
 	private static $aHeaders = [];
+
+	/** @var stdClass $oReportData. The report data, built up in steps. */
+	private static $oReportData = null;
 	
 	/** @var string $sOutput in which output will be stored if output is suppressed. */
 	private static $sOutput = '';
@@ -47,9 +59,9 @@ abstract class Helper {
 	private static $sView = '';
 
 	/**
-	 * @var DBObjectSet|null $oSet_Objects;
+	 * @var DBObjectSet|null $oSet Main object set linked to this report. Some reports don't have this.
 	 */
-	private static $oSet_Objects = null;
+	private static $oSet = null;
 
 	/**
 	 * Returns an optimized set of attribute codes for the current OQL filter.
@@ -58,21 +70,23 @@ abstract class Helper {
 	 *
 	 * @return array
 	 */
-	public static function GetAttributesToOutputForFilter(string $sClassName) : array {
+	public static function GetAttributesToOutputForFilter(string $sClass) : array {
 
 		// Already specified by a processor?
 		// If during enriching another class is called; this may need different optimization.
-		if(!isset($sClassName, static::$aOptimizedAttCodes)) {
+		if(!array_key_exists($sClass, static::$aOptimizedAttCodes)) {
 
-			static::Trace('Reverting to default attribute codes for class %1$s.', $sClassName);
+			static::Trace('Reverting to default attribute codes for class %1$s.', $sClass);
 			static::Trace('Only these classes were available: %1$s', implode(', ', array_keys(static::$aOptimizedAttCodes)));
 
-			static::$aOptimizedAttCodes[$sClassName][] = array_keys(MetaModel::ListAttributeDefs($sClassName));
+			static::$aOptimizedAttCodes[$sClass] = array_keys(MetaModel::ListAttributeDefs($sClass));
 
 
 		}
+
+		static::Trace('Optimized attribute codes for class "%1$s": %2$s', $sClass, json_encode(static::$aOptimizedAttCodes[$sClass], JSON_PRETTY_PRINT));
 		
-		return static::$aOptimizedAttCodes;
+		return static::$aOptimizedAttCodes[$sClass];
 
 	}
 	
@@ -104,11 +118,11 @@ abstract class Helper {
 	}
 
 	/**
-	 * Converts an iTop object set (DBObjectSet) to an array of iTop REST/JSON API-like objects (ObjectResult).
+	 * Converts an iTop object set (DBObjectSet) to an array of iTop REST/JSON API-like objects (based on ObjectResult, but stdClass for full extensibility).
 	 *
 	 * @param DBObjectSet $oSet
 	 * 
-	 * @return ObjectResult[]
+	 * @return stdClass[]
 	 */
 	public static function ConvertDBObjectSetToObjectResultArray(DBObjectSet $oSet) : array {
 
@@ -116,10 +130,15 @@ abstract class Helper {
 
 		static::Trace('Convert object set to array of ObjectResult objects.');
 
+		$aOutputAttCodes = static::GetAttributesToOutputForFilter($oSet->GetClass());
+
+		// Determine once and pass through.
+
 		$oSet->Rewind();
 		while($oObj = $oSet->Fetch()) {
 
-			$aObjectResults[$oObj::class.'::'.$oObj->GetKey()] = static::ConvertDBObjectToObjectResult($oObj);
+			$sKey = $oObj::class.'::'.$oObj->GetKey();
+			$aObjectResults[$sKey] = static::ConvertDBObjectToObjectResult($oObj, $aOutputAttCodes);
 
 		}
 
@@ -131,48 +150,44 @@ abstract class Helper {
 	 * Converts an iTop object to an iTop REST/JSON API-like object (ObjectResult).
 	 *
 	 * @param DBObject $oObject iTop object.
+	 * @param array $aOutputAttCodes An array of attribute codes that should be returned.
 	 *
-	 * @return ObjectResult
+	 * @return stdClass{
+	 *     key: int,
+	 *     class: string,
+	 *     fields: array<string, mixed>
+	 * } Object containing the object's class, key, and selected fields. stdClass for full extensibility.
+	 * 
 	 * 
 	 * @details Hint: Use static::SetOptimizedAttCodes() to limit the outputted fields / tweak performance.
 	 */
-	public static function ConvertDBObjectToObjectResult(DBObject $oObject) : ObjectResult {
+	public static function ConvertDBObjectToObjectResult(DBObject $oObject, ?array $aOutputAttCodes = null) : stdClass {
 
 		$sClass = $oObject::class;
+		$sKey = $sClass.'::'.$oObject->GetKey();
 
-		static::Trace('Convert %1$s to API RestResult.', $sClass.'::'.$oObject->GetKey());
+		static::Trace('Convert %1$s to API RestResult.', $sKey);
 
-		$aOptimizedAttCodes = static::GetAttributesToOutputForFilter($sClass);
-
-		static::Trace('Optimized attribute codes: %1$s', json_encode($aOptimizedAttCodes, JSON_PRETTY_PRINT));
+		// In case a single object is converted, this has not been determined yet.
+		// In case of an object set, this should be passed on already.
+		$aOutputAttCodes = $aOutputAttCodes ?? static::GetAttributesToOutputForFilter($sClass);
+		
 
 		$oObjRes = new ObjectResult($sClass, $oObject->GetKey());
 		$oObjRes->code = 0;
 		$oObjRes->message = '';
 
-		$aFields = null;
-	
-
-		// Enum all classes in the hierarchy, starting with the current one
-		foreach(MetaModel::EnumParentClasses($sClass, ENUM_PARENT_CLASSES_ALL, false) as $sRefClass) {
-
-			if (isset($sRefClass, $aOptimizedAttCodes)) {
-				$aFields = $aOptimizedAttCodes[$sRefClass];
-				break;
-			}
-		}
-		
-
-		if (is_null($aFields)) {
-			// No fieldspec given, or not found...
-			$aFields = array('id', 'friendlyname');
-		}
-
-		foreach ($aFields as $sAttCode) {
+		foreach($aOutputAttCodes as $sAttCode) {
 			$oObjRes->AddField($oObject, $sAttCode, false);
 		}
 
-		return $oObjRes;
+		// Returning a lighter and extensible class as "code", "message" are often not needed and ObjectResult can't be extended.
+		$oRet = new stdClass();
+		$oRet->key = $oObjRes->key;
+		$oRet->class = $oObjRes->class;
+		$oRet->fields = $oObjRes->fields;
+
+		return $oRet;
 		
 	}
 
@@ -246,25 +261,25 @@ abstract class Helper {
 		// - Convert DBObjectSet to REST/JSON API array structure to use in templates.
 		// Note: This performs the first fetch!
 			
-			$aReportData = [];
+			static::$oReportData = new stdClass();
 
-			if(static::$oSet_Objects !== null) {
+			if(static::$oSet !== null) {
 
 				static::Trace('Convert object(s) to REST/JSON structure.');
 
-				static::Trace('There are %1$s objects in the set.', static::$oSet_Objects->Count());
+				static::Trace('There are %1$s objects in the set.', static::$oSet->Count());
 
 				if(count(static::$aOptimizedAttCodes) > 0) {
 					static::Trace('Query optimization: %1$s', json_encode(static::$aOptimizedAttCodes));
 				}
 				
-				$aSet_Objects = static::ConvertDBObjectSetToObjectResultArray(static::$oSet_Objects);
+				$aSet_Objects = static::ConvertDBObjectSetToObjectResultArray(static::$oSet);
 				
 				if(static::GetView() == 'details') {
-					$aReportData['item'] = array_values($aSet_Objects)[0];
+					static::$oReportData->item = array_values($aSet_Objects)[0];
 				}
 				else {
-					$aReportData['items'] = $aSet_Objects;
+					static::$oReportData->items = $aSet_Objects;
 				}
 
 			}
@@ -274,50 +289,34 @@ abstract class Helper {
 
 			}
 
-		// - Enrich with some common variables.
+		// - Add some common variables (e.g. current_contact, request, ...)
 			
-			static::Trace('Common enrichment.');
+			static::Trace('Add common variables.');
 
-			// Enrich with common libraries.
+			// Add common libraries.
 			$sModuleUrl = utils::GetCurrentModuleUrl();
 			
-			// Expose some variables so they can be used in reports
-			$aReportData = array_merge_recursive($aReportData, [
-				'current_contact' => static::ConvertDBObjectToObjectResult(UserRights::GetUserObject()),
-				'request' => $_REQUEST,
-				'application' => [
-					'url' => MetaModel::GetConfig()->Get('app_root_url'),
-				],
-				
-				'itop' => [
-					// Enrich data with iTop setting (remove trailing /)
-					'root_url' => rtrim(utils::GetAbsoluteUrlAppRoot(), '/'),
-					'env' => utils::GetCurrentEnvironment(),
-					// This one may need better documentation:
-					'report_url' => utils::GetAbsoluteUrlAppRoot().'pages/exec.php?'.
-						'&exec_module='.Helper::MODULE_CODE.
-						'&exec_page=reporting.php'.
-						'&exec_env='.utils::GetCurrentEnvironment()
-				],
-
-				// Included common libraries (deprecated).
-				'lib' => [
-					'bootstrap' => [
-						'js' => $sModuleUrl.'/vendor/twbs/bootstrap/dist/js/bootstrap.min.js',
-						'css' => $sModuleUrl.'/vendor/twbs/bootstrap/dist/css/bootstrap.min.css',
-					],
-					'jquery' => [
-						'js' => $sModuleUrl.'/vendor/components/jquery/jquery.min.js',
-					],
-					'fontawesome' => [
-						'css' => $sModuleUrl.'/vendor/components/font-awesome/css/all.min.css',
-					],
-				],
-
-				// Expose the $_REQUEST parameters (expected: GET).
-				'request' => $_REQUEST,
-			]);
+			// Expose some variables so they can be used in reports.
 			
+			// - Contact / userr.
+
+				static::$oReportData->current_contact = static::ConvertDBObjectToObjectResult(UserRights::GetContactObject());
+				static::$oReportData->current_user = static::ConvertDBObjectToObjectResult(UserRights::GetUserObject());
+				static::$oReportData->request = $_REQUEST;
+
+			// - iTop.
+
+				static::$oReportData->itop = new stdClass();
+				// Enrich data with iTop setting (remove trailing /)
+				static::$oReportData->itop->root_url = rtrim(utils::GetAbsoluteUrlAppRoot(), '/');
+				static::$oReportData->itop->env = utils::GetCurrentEnvironment();
+
+				// This one may need better documentation:
+				static::$oReportData->itop->report_url = utils::GetAbsoluteUrlAppRoot().'pages/exec.php?'.
+							'&exec_module='.Helper::MODULE_CODE.
+							'&exec_page=reporting.php'.
+							'&exec_env='.utils::GetCurrentEnvironment();
+
 		
 		// - Enrich using processors.
 			
@@ -325,7 +324,7 @@ abstract class Helper {
 
 			foreach($aReportProcessors as $sClassName) {
 
-				$sClassName::EnrichData($aReportData);
+				$sClassName::EnrichData();
 
 			}
 			
@@ -335,7 +334,7 @@ abstract class Helper {
 			
 			foreach($aReportProcessors as $sClassName) {
 				
-				if(!$sClassName::DoExec($aReportData)) {
+				if(!$sClassName::DoExec()) {
 					break;
 				}
 				
@@ -354,7 +353,7 @@ abstract class Helper {
 	 */
 	public static function SetObjectSet($oSet_Objects) {
 
-		static::$oSet_Objects = $oSet_Objects;
+		static::$oSet = $oSet_Objects;
 		
 	}
 	
@@ -372,30 +371,44 @@ abstract class Helper {
 				
 			$oFilter = DBObjectSearch::unserialize($sFilter);
 			static::Trace('Filter: %1$s', $sFilter);
-			static::$oSet_Objects = new DBObjectSet($oFilter);
+			static::$oSet = new DBObjectSet($oFilter);
+
+			// Test
+			$oNewSet = DBObjectSet::FromScratch(static::$oSet->GetClass());
+
+			// Process only once from DB.
+			while($oObj = static::$oSet->Fetch()) {
+				$oNewSet->AddObject($oObj);
+			}
+
+			static::$oSet = $oNewSet;
+
+
 
 		}
 		
 	}
+
 
 	/**
-	 * Gets the rewinded iTop object set (currently being processed).
+	 * Gets the iTop object set (currently being processed).
 	 *
+	 * @param bool Whether to rewind the dataset. Beware when there is iteration!
+	 * 
 	 * @return DBObjectSet|null
 	 */
-	public static function GetObjectSet() : DBObjectSet|null {
+	public static function GetObjectSet(bool $bRewind) : DBObjectSet|null {
 
-		if(static::$oSet_Objects !== null) {
+		if(static::$oSet !== null && $bRewind) {
 
 			// In most cases, rewinding is advised anyway.
-			static::$oSet_Objects->Rewind();
+			static::$oSet->Rewind();
 
 		}
 		
-		return static::$oSet_Objects;
+		return static::$oSet;
 		
 	}
-	
 
 	/**
 	 * Trace function used for debugging.
@@ -623,6 +636,45 @@ abstract class Helper {
 
 	}
 
+
+	/**
+	 * Sets the value for a cache key.
+	 *
+	 * @param string $sKey
+	 * @param mixed $value
+	 * @return void
+	 */
+	public static function SetCache(string $sKey, $value) : void {
+
+		static::$aCache[$sKey] = $value;
+
+	}
+
+
+	/**
+	 * Returns the cached data.  
+	 * If the key doesn't exist, it will return null.
+	 *
+	 * @param string $sKey
+	 * @return mixed
+	 */
+	public static function GetCache(string $sKey) : mixed {
+
+		return static::$aCache[$sKey] ?? null;
+
+	}
+
+
+	/**
+	 * Returns the report data.
+	 *
+	 * @return object
+	 */
+	public static function GetData() : object|null {
+
+		return static::$oReportData;
+
+	}
 
 }
 
