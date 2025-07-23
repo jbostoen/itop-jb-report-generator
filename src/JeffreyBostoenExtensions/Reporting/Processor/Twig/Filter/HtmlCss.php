@@ -6,22 +6,22 @@
  * @version     3.2.250504
  */
 
-namespace JeffreyBostoenExtensions\Reporting\Processor\TwigFilter;
+namespace JeffreyBostoenExtensions\Reporting\Processor\Twig\Filter;
 
 // iTop internals.
 use utils;
 
 /**
- * Class HtmlScript. Adds a Twig filter named html_script that returns a HTML "script" tag, including a SHA-256 value for a specified file. (Subreesource Integrity - SRI).
+ * Class HtmlCss. Adds a Twig filter named html_css that returns a HTML "link" tag.
  * 
  * @deprecated Do not use yet.
  */
-abstract class HtmlScript extends Base {
+abstract class HtmlCss extends Base {
 
     /**
      * @inheritDoc
      */
-    public static function GetFilterFunction() : callable {
+    public static function GetFunction() : callable {
 
         $callable = function($sLibName) {
 
@@ -35,7 +35,7 @@ abstract class HtmlScript extends Base {
             // Get all the files.
             $sOutput = '';
 
-            foreach($sFQCN::GetJSFiles() as $sRelativeFileName) {
+            foreach($sFQCN::GetCSSFiles() as $sRelativeFileName) {
 
                 $sFileName = APPROOT.'env-'.utils::GetCurrentEnvironment().'/'.$sRelativeFileName;
 
@@ -44,10 +44,8 @@ abstract class HtmlScript extends Base {
                     continue;
                 }
                 
-                $sHash = hash_file('sha256', $sFileName, true);
-                $sOutput .= sprintf('<script src="%1$s" integrity="sha256-%2$s"></script>'.PHP_EOL, 
-                    utils::GetAbsoluteUrlModulesRoot().'/'.$sRelativeFileName,
-                    base64_encode($sHash)
+                $sOutput .= sprintf('<link rel="stylesheet" href="%1$s">'.PHP_EOL, 
+                    utils::GetAbsoluteUrlModulesRoot().'/'.$sRelativeFileName
                 );
 
             }

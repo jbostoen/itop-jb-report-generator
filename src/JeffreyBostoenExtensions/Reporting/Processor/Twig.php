@@ -12,16 +12,17 @@ use JeffreyBostoenExtensions\Reporting\Helper;
 
 // Generic.
 use Exception;
+use stdClass;
 
 // iTop internals.
-use ApplicationContext;
 use ApplicationException;
 use DBObjectSet;
 use Dict;
+use UserRights;
 use utils;
 
 // Twig.
-use Twig\{Environment, TwigFilter};
+use Twig\{Environment, TwigFilter, TwigFunction};
 use Twig\Loader\FilesystemLoader;
 
 /**
@@ -56,12 +57,15 @@ abstract class Twig extends Base {
 		}
 		catch(Exception $e) {
 			
-			Helper::Trace('Twig DoExec() failed: %1$s', $e->getMessage());
+			Helper::Trace('%1$s failed: %2$s', __METHOD__, $e->getMessage());
 			return false;
 
 		}
 
-		return true;
+		// Reason to continue?
+		// Save output somewhere?
+		Helper::Trace('Rendered report.');
+		return false;
 		
 	}
 	
@@ -150,15 +154,16 @@ abstract class Twig extends Base {
 	 */
 	public static function GetReportFromTwigTemplate() : Report {
 		
+		$sBaseDir = APPROOT.'env-'.utils::GetCurrentEnvironment();
 		$sReportFile = static::GetReportFileName();
-
+		
 		// - Generate report.
 			
 			// - Twig Loader.
 			// Expose entire 'extensions' (env-xxx) directory so it's possible to include Twig templates
 			// introduced by other iTop extensions (e.g. extra reports).
 			
-				$oLoader = new FilesystemLoader(APPROOT.'env-'.utils::GetCurrentEnvironment());
+				$oLoader = new FilesystemLoader($sBaseDir);
 			
 			// - Twig environment options.
 				
@@ -166,29 +171,36 @@ abstract class Twig extends Base {
 					'autoescape' => false,
 					'cache' => false // No cache is default; but enforce!
 				]);
-			
-			// - Add Twig filters.
+								
+			// - Add Twig filters & functions.
 				
-				Helper::Trace('Build list of Twig filters.');
+				Helper::Trace('Build list of Twig filters & functions.');
 
-				foreach(get_declared_classes() as $sClassName) {
-					if(in_array('JeffreyBostoenExtensions\Reporting\Processor\TwigFilter\iBase', class_implements($sClassName))) {
+				foreach(['Filter', 'Function'] as $sType) {
 
-						$bApplicable = $sClassName::IsApplicable();
+					$sTwigClass = 'Twig\\Twig'.$sType;
+					$sTwigMethod = 'add'.$sType;
 
-						Helper::Trace('Twig filter: %1$s , applicable = %2$s', $sClassName, $bApplicable ? 'yes' : 'no');
-
-						if($bApplicable) {
-
-							$oTwigEnv->addFilter(new TwigFilter($sClassName::GetFilterName(), $sClassName::GetFilterFunction()));
-							
+					foreach(get_declared_classes() as $sClassName) {
+						if(in_array('JeffreyBostoenExtensions\\Reporting\\Processor\Twig\\'.$sType.'\\iBase', class_implements($sClassName))) {
+	
+							$bApplicable = $sClassName::IsApplicable();
+	
+							Helper::Trace('Twig %1$s: %2$s , applicable = %3$s', $sType, $sClassName, $bApplicable ? 'yes' : 'no');
+	
+							if($bApplicable) {
+	
+								$oTwigEnv->$sTwigMethod(new $sTwigClass($sClassName::GetName(), $sClassName::GetFunction()));
+								
+							}
+	
 						}
-
 					}
+
 				}
 
-			
-			$sHTML = $oTwigEnv->render($sReportFile,  json_decode(json_encode(Helper::GetData()), true));
+			$oReportData = Helper::GetData();
+			$sHTML = $oTwigEnv->render($sReportFile,  json_decode(json_encode($oReportData), true));
 			
 			// When using different environments (usually stored in $_SESSION but it can be called with switch_env), 
 			// a more complete URL is needed for some renderers (e.g. ReportProcessorTwigToPDF)
@@ -198,25 +210,21 @@ abstract class Twig extends Base {
 		
 		// - Mime type.
 		
-			// Set Content-Type header for these extensions.
-			$aExtensionsToContentTypes = [
+			// Set Content-Type header for these extensions if the MIME type is known for the file extension.
+			$sReportFileExtension = strtolower(pathinfo($sReportFile, PATHINFO_EXTENSION));
+			$sMimeType = match($sReportFileExtension) {
 				'csv' => 'text/csv',
 				'html' => 'text/html',
 				'json' => 'application/json',
 				'twig' => 'text/html',
 				'txt' => 'text/plain',
-				'xml' => 'text/xml'
-			];
-			
-			// Check if known extension, set MIME Type.
-			$sReportFileExtension = strtolower(pathinfo($sReportFile, PATHINFO_EXTENSION));
-			if(isset($aExtensionsToContentTypes[$sReportFileExtension]) == true) {
-				Helper::SetHeader('Content-Type', $aExtensionsToContentTypes[$sReportFileExtension]);
-			}
+				'xml' => 'text/xml',
+				default => '',
+			};
 			
 		// - Build object.
 		
-			$oReport = new Report($sHTML, $aExtensionsToContentTypes[$sReportFileExtension] ?? '');
+			$oReport = new Report($sHTML, $sMimeType);
 
 		// - Return.
 

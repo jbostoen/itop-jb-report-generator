@@ -6,7 +6,7 @@
  * @version     3.2.250504
  */
 
-namespace JeffreyBostoenExtensions\Reporting\Processor\TwigFilter;
+namespace JeffreyBostoenExtensions\Reporting\Processor\Twig\Filter;
 
 // chillerlan.
 use chillerlan\QRCode\Common\EccLevel;
@@ -15,7 +15,7 @@ use chillerlan\QRCode\{QRCode, QROptions};
 
 abstract class QR extends Base {
     
-    public static function GetFilterFunction(): callable {
+    public static function GetFunction(): callable {
 
         return function ($sString) {
             

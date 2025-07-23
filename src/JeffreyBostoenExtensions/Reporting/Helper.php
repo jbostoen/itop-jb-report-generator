@@ -6,7 +6,9 @@
  * @version     3.2.250504
  */
 
- namespace JeffreyBostoenExtensions\Reporting;
+namespace JeffreyBostoenExtensions\Reporting;
+
+use JeffreyBostoenExtensions\Reporting\Processor\Twig as TwigProcessor;
 
 // Generic.
 use Exception;
@@ -103,7 +105,7 @@ abstract class Helper {
 		
 		$aResult = [];
 		
-		Helper::Trace('Convert object set.');
+		static::Trace('Convert object set.');
 
 		$oObjectSet->Rewind();
 		while($oObject = $oObjectSet->Fetch()) {
@@ -262,6 +264,7 @@ abstract class Helper {
 		// Note: This performs the first fetch!
 			
 			static::$oReportData = new stdClass();
+			$oReportData = static::$oReportData;
 
 			if(static::$oSet !== null) {
 
@@ -276,10 +279,10 @@ abstract class Helper {
 				$aSet_Objects = static::ConvertDBObjectSetToObjectResultArray(static::$oSet);
 				
 				if(static::GetView() == 'details') {
-					static::$oReportData->item = array_values($aSet_Objects)[0];
+					$oReportData->item = array_values($aSet_Objects)[0];
 				}
 				else {
-					static::$oReportData->items = $aSet_Objects;
+					$oReportData->items = $aSet_Objects;
 				}
 
 			}
@@ -288,35 +291,61 @@ abstract class Helper {
 				static::Trace('There is no OQL filter, so there is no object set.');
 
 			}
-
-		// - Add some common variables (e.g. current_contact, request, ...)
 			
+
+		// - Add common variables.
+
+			// Note: This was originally done here, before any enrichment happens further on.
+			// It is still here as it allows processors to use or alter this default data.
+	
 			static::Trace('Add common variables.');
-
-			// Add common libraries.
-			$sModuleUrl = utils::GetCurrentModuleUrl();
+				
+				$sBaseDir = APPROOT.'env-'.utils::GetCurrentEnvironment();
+				$sReportFile = TwigProcessor::GetReportFileName();
+				$sReportContent = file_get_contents($sBaseDir.'/'.$sReportFile);
 			
-			// Expose some variables so they can be used in reports.
-			
-			// - Contact / userr.
+				// Expose some variables so they can be used in reports.
+				// Note: Anything that is not very common, should only be added when needed in the report.
+				
+				// - Contact / user.
 
-				static::$oReportData->current_contact = static::ConvertDBObjectToObjectResult(UserRights::GetContactObject());
-				static::$oReportData->current_user = static::ConvertDBObjectToObjectResult(UserRights::GetUserObject());
-				static::$oReportData->request = $_REQUEST;
+					// Quick check as this is a costly operation.
+					// This can be slow when there are many items (e.g. tickets) linked to the current contact.
+					// "current_contact" is returned without hardcoded optimization here!
+					if(strpos($sReportContent, 'current_contact') !== false) {
+				
+						$oContact = UserRights::GetContactObject();
+						if($oContact) {
+							$oReportData->current_contact = static::ConvertDBObjectToObjectResult($oContact);
+						}
 
-			// - iTop.
+					}
+					
+					if(strpos($sReportContent, 'current_user') !== false) {
 
-				static::$oReportData->itop = new stdClass();
-				// Enrich data with iTop setting (remove trailing /)
-				static::$oReportData->itop->root_url = rtrim(utils::GetAbsoluteUrlAppRoot(), '/');
-				static::$oReportData->itop->env = utils::GetCurrentEnvironment();
+						$oUser = UserRights::GetUserObject();
+						if($oUser) {
+							$oReportData->current_user = static::ConvertDBObjectToObjectResult($oUser);
+						}
 
-				// This one may need better documentation:
-				static::$oReportData->itop->report_url = utils::GetAbsoluteUrlAppRoot().'pages/exec.php?'.
-							'&exec_module='.Helper::MODULE_CODE.
-							'&exec_page=reporting.php'.
-							'&exec_env='.utils::GetCurrentEnvironment();
+					}
 
+				// - $_REQUEST data.
+					
+					$oReportData->request = $_REQUEST;
+
+				// - iTop.
+
+					$oReportData->itop = new stdClass();
+					// Enrich data with iTop setting (remove trailing /)
+					$oReportData->itop->root_url = rtrim(utils::GetAbsoluteUrlAppRoot(), '/');
+					$oReportData->itop->env = utils::GetCurrentEnvironment();
+
+					// This one may need better documentation:
+					$oReportData->itop->report_url = utils::GetAbsoluteUrlAppRoot().'pages/exec.php?'.
+								'&exec_module='.static::MODULE_CODE.
+								'&exec_page=reporting.php'.
+								'&exec_env='.utils::GetCurrentEnvironment();
 		
 		// - Enrich using processors.
 			
@@ -522,7 +551,9 @@ abstract class Helper {
 	}
 	
 	/**
-	 * Adds to the output.
+	 * Adds to the output.  
+	 * By default, it prints the output.  
+	 * Some processors may disable printing the output, and keep it in memory.
 	 *
 	 * @param String $sOutput Output.
 	 *
@@ -557,7 +588,9 @@ abstract class Helper {
 	}
 	
 	/**
-	 * Sets whether or not the output should be suppressed (in this case it will be stored internally).
+	 * Sets whether the output should be suppressed (in this case it will be stored in the memory).  
+	 * 
+	 * A use case is that sometimes the report is not directly outputted on a web page, but for example sent by e-mail.
 	 *
 	 * @param bool $bValue True/false.
 	 *
@@ -571,7 +604,7 @@ abstract class Helper {
 	}
 	
 	/**
-	 * Returns whether or not the output should be suppressed (in which case it will be stored internally).
+	 * Returns whether the output is being suppressed.
 	 *
 	 * @return bool
 	 */

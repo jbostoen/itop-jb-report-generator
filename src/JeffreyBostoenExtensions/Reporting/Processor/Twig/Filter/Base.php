@@ -6,7 +6,7 @@
  * @version     3.2.250504
  */
 
-namespace JeffreyBostoenExtensions\Reporting\Processor\TwigFilter;
+namespace JeffreyBostoenExtensions\Reporting\Processor\Twig\Filter;
 
 use ReflectionClass;
 
@@ -16,7 +16,7 @@ use ReflectionClass;
 interface iBase {
 
 	/**
-	 * Whether or not this filter is applicable. By default, filters will be available!
+	 * Whether this filter is applicable. By default, filters will be available!
 	 *
 	 * @return boolean
 	 */
@@ -27,7 +27,7 @@ interface iBase {
 	 *
 	 * @return string
 	 */
-	public static function GetFilterName() : string;
+	public static function GetName() : string;
 
 
 	/**
@@ -35,7 +35,7 @@ interface iBase {
 	 *
 	 * @return callable
 	 */
-	public static function GetFilterFunction() : callable;
+	public static function GetFunction() : callable;
 
 }
 
@@ -47,7 +47,7 @@ abstract class Base implements iBase {
     /**
      * @inheritDoc
      */
-    public static function GetFilterFunction(): callable {
+    public static function GetFunction(): callable {
 
         return function(){};
 
@@ -56,7 +56,7 @@ abstract class Base implements iBase {
     /**
      * @inheritDoc
      */
-    public static function GetFilterName(): string {
+    public static function GetName(): string {
 
         $sName = (new ReflectionClass(get_called_class()))->getShortName();
 

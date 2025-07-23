@@ -6,7 +6,7 @@
  * @version     3.2.250504
  */
 
-namespace JeffreyBostoenExtensions\Reporting\Processor\TwigFilter;
+namespace JeffreyBostoenExtensions\Reporting\Processor\Twig\Filter;
 
 // iTop internals.
 use Dict;
@@ -19,7 +19,7 @@ abstract class DictS extends Base {
     /**
      * @inheritDoc
      */
-    public static function GetFilterFunction() : callable {
+    public static function GetFunction() : callable {
 
         $callable = function($sStringCode, $sDefault = null, $bUserLanguageOnly = false) {
             return Dict::S($sStringCode, $sDefault, $bUserLanguageOnly);

@@ -6,7 +6,7 @@
  * @version     3.2.250504
  */
 
-namespace JeffreyBostoenExtensions\Reporting\Processor\TwigFilter;
+namespace JeffreyBostoenExtensions\Reporting\Processor\Twig\Filter;
 
 
 // iTop internals.
@@ -20,7 +20,7 @@ abstract class MakeObjectUrl extends Base {
     /**
      * @inheritDoc
      */
-    public static function GetFilterFunction() : callable {
+    public static function GetFunction() : callable {
 
         $callable = function($sObjClass, $sObjKey) {
 

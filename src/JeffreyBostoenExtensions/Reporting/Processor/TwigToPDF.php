@@ -100,11 +100,12 @@ abstract class TwigToPDF extends Twig {
 		}
 		catch(Exception $e) {
 
-			Helper::Trace('TwigToPDF DoExec() failed: %1$s', $e->getMessage());
+			Helper::Trace('%1$s failed: %2$s', __METHOD__, $e->getMessage());
 			return false;
 
 		}
 
+		Helper::Trace('Rendered PDF report.');
 		return false;
 		
 	}
