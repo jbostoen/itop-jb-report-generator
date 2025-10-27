@@ -389,6 +389,9 @@ abstract class Helper {
 	/**
 	 * Sets iTop objects set (currently being processed).  
 	 * This will use the URL parameter "filter" to fetch the object set.
+	 * 
+	 * Note that for performance reasons, it will be an in-memory object set that is not automatically re-fetched from the database 
+	 * when the set is rewinded.
 	 *
 	 * @return void
 	 */
@@ -400,22 +403,37 @@ abstract class Helper {
 				
 			$oFilter = DBObjectSearch::unserialize($sFilter);
 			static::Trace('Filter: %1$s', $sFilter);
-			static::$oSet = new DBObjectSet($oFilter);
 
-			// Test
-			$oNewSet = DBObjectSet::FromScratch(static::$oSet->GetClass());
-
-			// Process only once from DB.
-			while($oObj = static::$oSet->Fetch()) {
-				$oNewSet->AddObject($oObj);
-			}
-
-			static::$oSet = $oNewSet;
-
-
+			// For performance purposes; a new in-memory set is created.
+			static::$oSet = Helper::GetInMemoryObjectSet($oFilter);
 
 		}
 		
+	}
+
+
+	/**
+	 * Returns an in-memory database object set.
+	 * 
+	 * This object set is stored in-memory.  
+	 * When rewinded, it is only aware of the in-memory data;  
+	 * it does not re-query the database.
+	 *
+	 * @param DBObjectSearch $oFilter
+	 * @return DBObjectSet
+	 */
+	public static function GetInMemoryObjectSet(DBObjectSearch $oFilter) : DBObjectSet {
+		
+		$oSet = new DBObjectSet($oFilter);
+		$oInMemorySet = DBObjectSet::FromScratch($oSet->GetClass());
+
+		// Process only once from DB.
+		while($oObj = $oSet->Fetch()) {
+			$oInMemorySet->AddObject($oObj);
+		}
+
+		return $oInMemorySet;
+
 	}
 
 
