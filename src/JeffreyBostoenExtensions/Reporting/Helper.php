@@ -149,7 +149,7 @@ abstract class Helper {
 	}
 
 	/**
-	 * Converts an iTop object to an iTop REST/JSON API-like object (ObjectResult).
+	 * Converts an iTop object to an iTop REST/JSON API-like object (ObjectResult - but converted to stdClass).
 	 *
 	 * @param DBObject $oObject iTop object.
 	 * @param array $aOutputAttCodes An array of attribute codes that should be returned.

@@ -41,6 +41,36 @@ abstract class TwigToPDF extends Twig {
 		return (in_array($sAction, ['download_pdf', 'show_pdf', 'attach_pdf']) == true);
 		
 	}
+
+
+
+	/**
+	 * Returns the file name for the PDF.
+	 *
+	 * @return string
+	 */
+	public static function GetPdfFileName() : string {
+
+		$oReportData = Helper::GetData();
+
+		if(property_exists($oReportData, 'item')) {
+
+			$oItem = $oReportData->item;
+			return date('Ymd_His').'_'.$oItem->class.'_'.$oItem->key.'.pdf';
+
+		}
+		elseif(property_exists($oReportData, 'items')) {
+
+			$oItem = $oReportData->items[0];
+			return date('Ymd_His').'_'.$oItem->class.'_list.pdf';
+
+		}
+
+		// Perhaps the report did not contain any iTop data.
+		return 'report_data.pdf';
+
+	}
+	
 	
 	/**
 	 * @inheritDoc
@@ -54,13 +84,11 @@ abstract class TwigToPDF extends Twig {
 			if(property_exists($oReportData, 'item')) {
 
 				$oItem = $oReportData->item;
-				$sFileName = date('Ymd_His').'_'.$oItem->class.'_'.$oItem->key.'.pdf';
 
 			}
 			elseif(property_exists($oReportData, 'items')) {
 
 				$oItem = $oReportData->items[0];
-				$sFileName = date('Ymd_His').'_'.$oItem->class.'_list.pdf';
 
 			}
 			
