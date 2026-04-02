@@ -99,7 +99,7 @@ class Menu implements iPopupMenuExtension {
 			$aReports = [];
 			foreach(get_declared_classes() as $sClassName) {
 			
-				if(in_array('JeffreyBostoenExtensions\Reporting\UI\iBase', class_implements($sClassName))) {
+				if(in_array(iBase::class, class_implements($sClassName))) {
 					if($sClassName::IsApplicable() == true) {
 						$aReports[] = $sClassName;
 					}

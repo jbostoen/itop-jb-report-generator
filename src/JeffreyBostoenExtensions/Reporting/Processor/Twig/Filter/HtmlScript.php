@@ -8,11 +8,13 @@
 
 namespace JeffreyBostoenExtensions\Reporting\Processor\Twig\Filter;
 
+use JeffreyBostoenExtensions\Reporting\Helper;
+
 // iTop internals.
 use utils;
 
 /**
- * Class HtmlScript. Adds a Twig filter named html_script that returns a HTML "script" tag, including a SHA-256 value for a specified file. (Subreesource Integrity - SRI).
+ * Class HtmlScript. Adds a Twig filter named html_script that returns a HTML "script" tag, including a SHA-256 value for a specified file. (Subresource Integrity - SRI).
  * 
  * @deprecated Do not use yet.
  */
@@ -27,9 +29,11 @@ abstract class HtmlScript extends Base {
 
             $sFQCN = 'JeffreyBostoenExtensions\\Reporting\\Processor\\FrontendLib\\'.$sLibName;
 
-            // Is the front-end library known?
+            Helper::Trace('Processing html_script "%1$s"', $sFQCN);
+
+            // - Is the front-end library known?
             if(!class_exists($sFQCN)) {
-                return '<!-- Unknown front-end library: '.$sLibName.' -->';
+                return sprintf('<!-- Unknown front-end library: %1$s -->', $sLibName);
             }
 
             // Get all the files.
@@ -40,7 +44,7 @@ abstract class HtmlScript extends Base {
                 $sFileName = APPROOT.'env-'.utils::GetCurrentEnvironment().'/'.$sRelativeFileName;
 
                 if(!file_exists($sFileName)) {
-                    $sOutput .= '<!-- File does not exist: '.$sRelativeFileName.' -->';
+                    $sOutput .= sprintf('<!-- File does not exist: %1$s -->', $sRelativeFileName);
                     continue;
                 }
                 

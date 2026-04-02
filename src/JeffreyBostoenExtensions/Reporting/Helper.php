@@ -502,11 +502,23 @@ abstract class Helper {
 
 		if(static::$sTraceId == null) {
 				
-			static::$sTraceId = bin2hex(random_bytes(10));
+			static::$sTraceId = static::GetGuid();
 			
 		}
 
 		return static::$sTraceId;
+
+	}
+
+
+	/**
+	 * Returns a GUID. This can also be used in other places.
+	 *
+	 * @return string
+	 */
+	public static function GetGuid() : string {
+
+		return bin2hex(random_bytes(10));
 
 	}
 
