@@ -66,7 +66,7 @@ abstract class TwigToPDF extends Twig {
 
 		}
 
-		// Perhaps the report did not contain any iTop data.
+		// Perhaps the report did not contain any iTop object(s) data.
 		return 'report_data.pdf';
 
 	}
@@ -98,6 +98,7 @@ abstract class TwigToPDF extends Twig {
 			
 			$sAction = utils::ReadParam('action', '', false, 'string');
 
+			$sFileName = static::GetPdfFileName();
 		
 			switch($sAction) {
 				case 'show_pdf':
@@ -315,8 +316,6 @@ abstract class TwigToPDF extends Twig {
 					Helper::Trace('Invalid HTTP response code: %1$s, error: %2$s', $iHttpStatus, curl_error($ch));
 					throw new Exception('Invalid HTTP response code: '.$iHttpStatus.', '.curl_error($ch));
 				}
-				
-				curl_close($ch);
 				
 				// Process response.
 				$oData = json_decode($response);
