@@ -68,7 +68,7 @@ abstract class Helper {
 	/**
 	 * Returns an optimized set of attribute codes for the current OQL filter.
 	 * 
-	 * @param string $sClassName Class name (Can be different from the main set!).
+	 * @param string $sClass Class name (Can be different from the main set!).
 	 *
 	 * @return array
 	 */
@@ -215,8 +215,6 @@ abstract class Helper {
 	
 	/**
 	 * Executes the reporting.
-	 *
-	 * @param String $sFilter OQL filter
 	 *
 	 * @return void
 	 */
@@ -376,13 +374,13 @@ abstract class Helper {
 	/**
 	 * Sets iTop objects set (currently being processed).
 	 *
-	 * @param DBObjectSet $oSet_Objects A set of iTop objects.
+	 * @param DBObjectSet $oSetObjects A set of iTop objects.
 	 *
 	 * @return void
 	 */
-	public static function SetObjectSet($oSet_Objects) {
+	public static function SetObjectSet($oSetObjects) : void {
 
-		static::$oSet = $oSet_Objects;
+		static::$oSet = $oSetObjects;
 		
 	}
 	
@@ -395,7 +393,7 @@ abstract class Helper {
 	 *
 	 * @return void
 	 */
-	public static function SetObjectSetFromFilter() {
+	public static function SetObjectSetFromFilter() : void {
 
 		$sFilter = utils::ReadParam('filter', '', false, 'raw_data');
 		
@@ -418,6 +416,8 @@ abstract class Helper {
 	 * This object set is stored in-memory.  
 	 * When rewinded, it is only aware of the in-memory data;  
 	 * it does not re-query the database.
+	 * 
+	 * It deliberately does NOT cache anything in this method.
 	 *
 	 * @param DBObjectSearch $oFilter
 	 * @return DBObjectSet
@@ -432,6 +432,8 @@ abstract class Helper {
 			$oInMemorySet->AddObject($oObj);
 		}
 
+		$oInMemorySet->Rewind();
+
 		return $oInMemorySet;
 
 	}
@@ -440,7 +442,7 @@ abstract class Helper {
 	/**
 	 * Gets the iTop object set (currently being processed).
 	 *
-	 * @param bool Whether to rewind the dataset. Beware when there is iteration!
+	 * @param bool $bRewind Whether to rewind the dataset. Beware when there is iteration!
 	 * 
 	 * @return DBObjectSet|null
 	 */

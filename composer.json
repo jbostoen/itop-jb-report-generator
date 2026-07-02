@@ -6,7 +6,7 @@
     },
     "require": {
         "twig/twig": "^3.",
-        "chillerlan/php-qrcode": "^5.",
+        "chillerlan/php-qrcode": "^6.",
         "spatie/browsershot": "^5.",
         "components/jquery": "^3.",
         "twbs/bootstrap": "^5.",

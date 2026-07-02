@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <licenses>
-   <license>
-      <product>chillerlan/php-qrcode</product>
-      <author>Smiley</author>
-      <license_type>Apache 2.0</license_type>
-      <text><![CDATA[<h3>
+  <license>
+    <product>chillerlan/php-qrcode</product>
+    <author>Smiley</author>
+    <license_type>Apache 2.0</license_type>
+    <text><![CDATA[<h3>
     Apache License
   </h3>
   <p>
@@ -146,12 +146,12 @@
     Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
     either express or implied. See the License for the specific language governing permissions and limitations under the License.
   </p>]]></text>
-   </license>
-   <license>
-      <product>chillerlan/php-qrcode</product>
-      <author>Smiley</author>
-      <license_type>MIT</license_type>
-      <text><![CDATA[<h3>The MIT License (MIT)</h3>
+  </license>
+  <license>
+    <product>chillerlan/php-qrcode</product>
+    <author>Smiley</author>
+    <license_type>MIT</license_type>
+    <text><![CDATA[<h3>The MIT License (MIT)</h3>
   <p>Copyright (c) 2015 Smiley &lt;smiley@chillerlan.net&gt;</p>
   <p>
     Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -174,12 +174,12 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     THE SOFTWARE.
   </p>]]></text>
-   </license>
-   <license>
-      <product>twigphp/twig</product>
-      <author>Twig Team</author>
-      <license_type>BSD 3</license_type>
-      <text><![CDATA[
+  </license>
+  <license>
+    <product>twigphp/twig</product>
+    <author>Twig Team</author>
+    <license_type>BSD 3</license_type>
+    <text><![CDATA[
         <h3>BSD License (Twig)</h3>
         <p>Copyright (c) 2009-present by the Twig Team.<br>
         All rights reserved.</p>
@@ -211,12 +211,12 @@
           SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         </p>
       ]]></text>
-   </license>
-   <license>
-      <product>spatie/browsershot</product>
-      <author>Spatie team</author>
-      <license_type>MIT</license_type>
-      <text><![CDATA[
+  </license>
+  <license>
+    <product>spatie/browsershot</product>
+    <author>Spatie team</author>
+    <license_type>MIT</license_type>
+    <text><![CDATA[
         <h3>The MIT License (MIT)</h3>
         <p>Copyright (c) Spatie bvba info@spatie.be</p>
         <p>
@@ -241,12 +241,12 @@
           THE SOFTWARE.
         </p>
       ]]></text>
-   </license>
-   <license>
-      <product>jquery/jquery</product>
-      <author>OpenJS Foundation and other contributors</author>
-      <license_type>MIT</license_type>
-      <text><![CDATA[
+  </license>
+  <license>
+    <product>jquery/jquery</product>
+    <author>OpenJS Foundation and other contributors</author>
+    <license_type>MIT</license_type>
+    <text><![CDATA[
         <h3>The MIT License</h3>
         <p>Copyright OpenJS Foundation and other contributors, 
         <a href="https://openjsf.org/">https://openjsf.org/</a></p>
@@ -273,12 +273,12 @@
           WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         </p>
       ]]></text>
-   </license>
-   <license>
-      <product>twbs/bootstrap</product>
-      <author>Twitter / The Bootstrap Authors</author>
-      <license_type>MIT</license_type>
-      <text><![CDATA[
+  </license>
+  <license>
+    <product>twbs/bootstrap</product>
+    <author>Twitter / The Bootstrap Authors</author>
+    <license_type>MIT</license_type>
+    <text><![CDATA[
         <h3>The MIT License (MIT)</h3>
         <p>Copyright (c) 2011-2025 The Bootstrap Authors</p>
         <p>
@@ -303,12 +303,12 @@
           THE SOFTWARE.
         </p>
       ]]></text>
-   </license>
-   <license>
-      <product>fortawesome/fontawesome</product>
-      <author>OpenJS Foundation and other contributors</author>
-      <license_type>MIT / CC / SIL OFL 1.1</license_type>
-      <text><![CDATA[
+  </license>
+  <license>
+    <product>fortawesome/fontawesome</product>
+    <author>OpenJS Foundation and other contributors</author>
+    <license_type>MIT / CC / SIL OFL 1.1</license_type>
+    <text><![CDATA[
         <h3>Fonticons, Inc. (https://fontawesome.com)</h3>
 
         <hr>
@@ -479,5 +479,5 @@
           represent the company, product, or service to which they refer.</b>
         </p>
       ]]></text>
-   </license>
+  </license>
 </licenses>
