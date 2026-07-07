@@ -126,10 +126,15 @@ Since this extension at some point used a more recent version of Twig than the n
 
 ## Object URL
 
-It's possible to generate an object URL (to the iTop object's details page) with a simple filter.
+It's possible to generate an object URL (to the iTop object's details page) with a simple filter.  
+
+Specify either:
+- An iTop object.
+- An iTop class name, and an ID. (Use this if the class needs to be different than the iTop object's own class).
 
 ```
-{{ item.key|make_object_url(item.class) }}
+{{ item|make_object_url(item.fields.caller_id) }}
+{{ 'Person'|make_object_url(item.fields.caller_id) }}
 ```
 
 ## Popular frameworks
@@ -142,7 +147,8 @@ These come pre-bundled.
 |--------------------------- | ---------------  |
 | Bootstrap                  | Yes | Yes        |
 | FontAwesome                | Yes | No         |
-| Jquery                     | No  | Yes        |
+| Jquery (v3 - deprecated)   | No  | Yes        |
+
 
 Usage:
 
@@ -166,8 +172,23 @@ This filter will turn any string into a QR code.
 Here's an example to generate a QR code for an object:
 
 ```
-{{ item.key|make_object_url(item.class)|qr }}
+{{ item|make_object_url|qr }}
 ```
+
+This filter also accepts the options that are available in the chillerlan/php-qrcode library.  
+The options can be provided like this:
+
+```
+{{ item|make_object_url|qr({'version': 6 }) }}
+```
+
+
+# Twig functions
+
+## GUID
+
+Calling `guid()` will return a 32 character GUID.
+
 
 
 

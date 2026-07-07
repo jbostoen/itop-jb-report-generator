@@ -10,18 +10,18 @@ namespace JeffreyBostoenExtensions\Reporting\Processor\Twig\Filter;
 
 use JeffreyBostoenExtensions\Reporting\Helper;
 
-// iTop internals.
+// iTop.
 use utils;
 
 /**
  * Class HtmlScript. Adds a Twig filter named html_script that returns a HTML "script" tag, including a SHA-256 value for a specified file. (Subresource Integrity - SRI).
  */
-abstract class HtmlScript extends Base {
+class HtmlScript extends Base {
 
     /**
      * @inheritDoc
      */
-    public static function GetFunction() : callable {
+    public function GetFunction() : callable {
 
         $callable = function($sLibName) {
 

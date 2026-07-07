@@ -56,13 +56,20 @@ abstract class TwigToPDF extends Twig {
 		if(property_exists($oReportData, 'item')) {
 
 			$oItem = $oReportData->item;
-			return date('Ymd_His').'_'.$oItem->class.'_'.$oItem->key.'.pdf';
+			return sprintf('%1$s_%2$s_%3$s.pdf',
+				date('Ymd_His'),
+				$oItem->class,
+				$oItem->key
+			);
 
 		}
 		elseif(property_exists($oReportData, 'items')) {
 
 			$oItem = $oReportData->items[0];
-			return date('Ymd_His').'_'.$oItem->class.'_list.pdf';
+			return sprintf('%1$s_%2$s_list.pdf',
+				date('Ymd_His'),
+				$oItem->class
+			);
 
 		}
 

@@ -12,14 +12,14 @@ namespace JeffreyBostoenExtensions\Reporting\Processor\Twig\Filter;
 use Dict;
 
 /**
- * Class MakeObjectUrl. Adds a Twig filter named dict_s that returns an iTop translation ( see iTop's Dict::S() )
+ * Class DictS. Adds a Twig filter named dict_s that returns an iTop translation ( see iTop's Dict::S() )
  */
-abstract class DictS extends Base {
+class DictS extends Base {
 
     /**
      * @inheritDoc
      */
-    public static function GetFunction() : callable {
+    public function GetFunction() : callable {
 
         $callable = function($sStringCode, $sDefault = null, $bUserLanguageOnly = false) {
             return Dict::S($sStringCode, $sDefault, $bUserLanguageOnly);

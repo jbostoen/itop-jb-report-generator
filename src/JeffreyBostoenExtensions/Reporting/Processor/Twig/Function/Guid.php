@@ -8,13 +8,19 @@
 
 namespace JeffreyBostoenExtensions\Reporting\Processor\Twig\Function;
 
+/**
+ * Class Guid. Provides a Twig filter to return a 32 character GUID.
+ */
 abstract class Guid extends Base {
     
-    public static function GetFunction(): callable {
+    /**
+     * @inheritDoc
+     */
+    public function GetFunction(): callable {
 
-        return function () {
+        return function () : string {
             
-            return bin2hex(random_bytes(10));
+            return bin2hex(random_bytes(16));
     
         };
         

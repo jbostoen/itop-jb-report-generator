@@ -3,6 +3,18 @@
 While backward compatibility is important, it's unfortunately not always feasible to improve this extension and not break things.  
 Here, you'll find useful info when coming from an older version.
 
+
+
+
+### Upgrade to 2026-07-07
+
+
+* The Twig filter `make_object_url` now also accepts an object.
+* The jQuery library is marked as deprecated. It is still included as of now. jQuery 4 will not be added in this base extension.
+* When adding new Twig filters and functions, the class should no longer be abstract. The methods should no longer be static.
+
+
+
 ### Upgrade to 2025-04-28
 
 While not deprecated yet; it's no longer recommended to use the previous `lib.x` variables to include CSS or JavaScript.

@@ -65,8 +65,11 @@ abstract class Helper {
 	 */
 	private static $oSet = null;
 
+
 	/**
-	 * Returns an optimized set of attribute codes for the current OQL filter.
+	 * Returns an optimized set of attribute codes for the current OQL filter.  
+	 * 
+	 * If no limited set of attribute codes was specified before for the given iTop class, it returns all the attribute codes.
 	 * 
 	 * @param string $sClass Class name (Can be different from the main set!).
 	 *
@@ -92,32 +95,6 @@ abstract class Helper {
 
 	}
 	
-	/**
-	 * Returns an array (similar to REST/JSON) from an iTop object set.
-	 *
-	 * @param DBObjectSet $oObjectSet iTop object set.
-	 *
-	 * @return array Each key is 'Class::ID' (the class being the common ancestor of the object set), with the value being an array (REST/JSON API structure).
-	 * 
-	 * @deprecated
-	 */
-	public static function ObjectSetToArray(DBObjectSet $oObjectSet) : array {
-		
-		$aResult = [];
-		
-		static::Trace('Convert object set.');
-
-		$oObjectSet->Rewind();
-		while($oObject = $oObjectSet->Fetch()) {
-
-			$sKey = $oObject::class.'::'.$oObject->GetKey();
-			$aResult[$sKey] = static::ObjectToArray($oObject);
-			
-		}
-		
-		return $aResult;
-		
-	}
 
 	/**
 	 * Converts an iTop object set (DBObjectSet) to an array of iTop REST/JSON API-like objects (based on ObjectResult, but stdClass for full extensibility).
@@ -132,15 +109,13 @@ abstract class Helper {
 
 		static::Trace('Convert object set to array of ObjectResult objects.');
 
-		$aOutputAttCodes = static::GetAttributesToOutputForFilter($oSet->GetClass());
-
 		// Determine once and pass through.
 
 		$oSet->Rewind();
 		while($oObj = $oSet->Fetch()) {
 
-			$sKey = $oObj::class.'::'.$oObj->GetKey();
-			$aObjectResults[$sKey] = static::ConvertDBObjectToObjectResult($oObj, $aOutputAttCodes);
+			$sKey = Helper::GetKeyNameForDBObject($oObj);
+			$aObjectResults[$sKey] = static::ConvertDBObjectToStdClass($oObj);
 
 		}
 
@@ -163,11 +138,11 @@ abstract class Helper {
 	 * 
 	 * @details Hint: Use static::SetOptimizedAttCodes() to limit the outputted fields / tweak performance.
 	 */
-	public static function ConvertDBObjectToObjectResult(DBObject $oObject, ?array $aOutputAttCodes = null) : stdClass {
+	public static function ConvertDBObjectToStdClass(DBObject $oObject, ?array $aOutputAttCodes = null) : stdClass {
 
 		$sClass = $oObject::class;
-		$sKey = $sClass.'::'.$oObject->GetKey();
-
+		$sKey = Helper::GetKeyNameForDBObject($oObject);
+		
 		static::Trace('Convert %1$s to API RestResult.', $sKey);
 
 		// In case a single object is converted, this has not been determined yet.
@@ -183,7 +158,7 @@ abstract class Helper {
 			$oObjRes->AddField($oObject, $sAttCode, false);
 		}
 
-		// Returning a lighter and extensible class as "code", "message" are often not needed and ObjectResult can't be extended.
+		// Returning a lighter and extensible class. "code", "message" are often not needed, and ObjectResult can't be extended.
 		$oRet = new stdClass();
 		$oRet->key = $oObjRes->key;
 		$oRet->class = $oObjRes->class;
@@ -192,26 +167,7 @@ abstract class Helper {
 		return $oRet;
 		
 	}
-
-
-	/**
-	 * Converts a DBObject to an associative array (iTop REST/JSON API-like structure).
-	 *
-	 * @return array
-	 * 
-	 * @deprecated
-	 */
-	public static function ObjectToArray(DBObject $oDBObject) : array {
-
-		$oObjRes = static::ConvertDBObjectToObjectResult($oDBObject);
-		$sJSON = json_encode($oObjRes);
-		
-		// Fix #1897 AttributeText (HTML): GetForJSON() -> GetEditValue() -> escaping of '&'
-		$sJSON = str_replace('&amp;', '&', $sJSON);
-		
-		return json_decode($sJSON, true);
-
-	}
+	
 	
 	/**
 	 * Executes the reporting.
@@ -276,7 +232,7 @@ abstract class Helper {
 				
 				$aSet_Objects = static::ConvertDBObjectSetToObjectResultArray(static::$oSet);
 				
-				if(static::GetView() == 'details') {
+				if(static::GetView() === 'details') {
 					$oReportData->item = array_values($aSet_Objects)[0];
 				}
 				else {
@@ -314,7 +270,7 @@ abstract class Helper {
 				
 						$oContact = UserRights::GetContactObject();
 						if($oContact) {
-							$oReportData->current_contact = static::ConvertDBObjectToObjectResult($oContact);
+							$oReportData->current_contact = static::ConvertDBObjectToStdClass($oContact);
 						}
 
 					}
@@ -323,7 +279,7 @@ abstract class Helper {
 
 						$oUser = UserRights::GetUserObject();
 						if($oUser) {
-							$oReportData->current_user = static::ConvertDBObjectToObjectResult($oUser);
+							$oReportData->current_user = static::ConvertDBObjectToStdClass($oUser);
 						}
 
 					}
@@ -738,6 +694,19 @@ abstract class Helper {
 	public static function GetData() : object|null {
 
 		return static::$oReportData;
+
+	}
+
+
+	/**
+	 * Returns an identifier (class::id) for an object ID.
+	 *
+	 * @param DBObject $oObj
+	 * @return string
+	 */
+	public static function GetKeyNameForDBObject(DBObject $oObj) : string {
+
+		return sprintf('%1$s::%2$s', $oObj::class, $oObj->GetKey());
 
 	}
 

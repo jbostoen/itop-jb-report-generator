@@ -10,24 +10,11 @@ namespace JeffreyBostoenExtensions\Reporting\Processor\Twig\Function;
 
 use ReflectionClass;
 
+
 /**
- * Interface iBase. An interface that can be used to register new Twig functions for the Report Generator.
+ * Class Base. An abstract class to extend. Leaf subclasses should be non-abstract. It can be used to introduce new Twig functions.
  */
-interface iBase {
-
-	/**
-	 * Whether this function is applicable. By default, functions will be available!
-	 *
-	 * @return boolean
-	 */
-	public static function IsApplicable() : bool;
-
-	/**
-	 * Returns the name.
-	 *
-	 * @return string
-	 */
-	public static function GetName() : string;
+abstract class Base {
 
 
 	/**
@@ -35,28 +22,19 @@ interface iBase {
 	 *
 	 * @return callable
 	 */
-	public static function GetFunction() : callable;
-
-}
-
-/**
- * Class Base. A class that implements the iBase interface. This base class can used as a parent for any other Twig functions.
- */
-abstract class Base implements iBase {
-
-    /**
-     * @inheritDoc
-     */
-    public static function GetFunction(): callable {
+    public function GetFunction(): callable {
 
         return function(){};
 
     }
 
-    /**
-     * @inheritDoc
-     */
-    public static function GetName(): string {
+
+	/**
+	 * Returns the name.
+	 *
+	 * @return string
+	 */
+    public function GetName(): string {
 
         $sName = (new ReflectionClass(get_called_class()))->getShortName();
 
@@ -65,14 +43,14 @@ abstract class Base implements iBase {
 
     }
 
+	/**
+	 * Whether this function is applicable. By default, functions will be available!
+	 *
+	 * @return boolean
+	 */
+    public function IsApplicable() : bool {
 
-    /**
-     * @inheritDoc
-     */
-    public static function IsApplicable() : bool {
-
-        return !empty(class_parents(get_called_class()));
-
+        return true;
     }
 
 }

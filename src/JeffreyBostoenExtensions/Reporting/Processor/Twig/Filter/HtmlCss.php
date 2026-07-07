@@ -16,12 +16,12 @@ use utils;
  * 
  * @deprecated Do not use yet.
  */
-abstract class HtmlCss extends Base {
+class HtmlCss extends Base {
 
     /**
      * @inheritDoc
      */
-    public static function GetFunction() : callable {
+    public function GetFunction() : callable {
 
         $callable = function($sLibName) {
 

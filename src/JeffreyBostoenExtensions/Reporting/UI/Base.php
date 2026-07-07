@@ -138,7 +138,7 @@ abstract class Base implements iBase {
 		foreach($aParameters as $sKey => $sValue) {
 
 			// If a parameter is not set or does not match the expected value: It does not match.
-			if(utils::ReadParam($sKey, null, true, 'raw_data') != $sValue) {
+			if(utils::ReadParam($sKey, null, true, 'raw_data') !== $sValue) {
 				return false;
 			}
 

@@ -8,10 +8,14 @@
 
 namespace JeffreyBostoenExtensions\Reporting\Processor;
 
+use JeffreyBostoenExtensions\Reporting\Processor\Twig\Filter\Base as FilterBase;
+use JeffreyBostoenExtensions\Reporting\Processor\Twig\Function\Base as FunctionBase;
+
 use JeffreyBostoenExtensions\Reporting\Helper;
 
 // Generic.
 use Exception;
+use ReflectionClass;
 use stdClass;
 
 // iTop internals.
@@ -176,31 +180,44 @@ abstract class Twig extends Base {
 				
 				Helper::Trace('Build list of Twig filters & functions.');
 
-				foreach(['Filter', 'Function'] as $sType) {
-
-					$sTwigClass = 'Twig\\Twig'.$sType;
-					$sTwigMethod = 'add'.$sType;
+				foreach([TwigFilter::class => FilterBase::class, TwigFunction::class => FunctionBase::class] as $sTwigClass => $sBaseClass) {
 
 					foreach(get_declared_classes() as $sClassName) {
-						if(in_array('JeffreyBostoenExtensions\\Reporting\\Processor\Twig\\'.$sType.'\\iBase', class_implements($sClassName))) {
-	
-							$bApplicable = $sClassName::IsApplicable();
-	
-							Helper::Trace('Twig %1$s: %2$s , applicable = %3$s', $sType, $sClassName, $bApplicable ? 'yes' : 'no');
-	
-							if($bApplicable) {
-	
-								$oTwigEnv->$sTwigMethod(new $sTwigClass($sClassName::GetName(), $sClassName::GetFunction()));
-								
+
+						// - Ignore classes that are not a subclass of the base class.
+							if(!is_subclass_of($sClassName, $sBaseClass)) {
+								continue;
 							}
-	
+
+						// - Ignore abstract.
+							$oReflection = new ReflectionClass($sClassName);
+							if($oReflection->isAbstract()) {
+								continue;
+							}
+
+						/** @var FilterBase|FunctionBase $oInstance */
+						$oInstance = new $sClassName();
+					
+						$bApplicable = $oInstance->IsApplicable();
+
+						Helper::Trace('Twig %1$s: %2$s , applicable = %3$s',
+							$sTwigClass,
+							$sClassName,
+							$bApplicable ? 'yes' : 'no
+						');
+
+						if($bApplicable) {
+
+							$sTwigMethod = $oInstance instanceof FilterBase ? 'addFilter' : 'addFunction';
+							$oTwigEnv->$sTwigMethod(new $sTwigClass($oInstance->GetName(), $oInstance->GetFunction()));
+							
 						}
 					}
 
 				}
 
 			$oReportData = Helper::GetData();
-			$sHTML = $oTwigEnv->render($sReportFile,  json_decode(json_encode($oReportData), true));
+			$sHTML = $oTwigEnv->render($sReportFile, (array)($oReportData));
 			
 			// When using different environments (usually stored in $_SESSION but it can be called with switch_env), 
 			// a more complete URL is needed for some renderers (e.g. ReportProcessorTwigToPDF)
