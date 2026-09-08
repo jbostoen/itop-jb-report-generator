@@ -13,7 +13,6 @@ use JeffreyBostoenExtensions\Reporting\Helper;
 // iTop internals
 use CMDBObjectSet;
 use DBObjectSearch;
-use DBObjectSet;
 use ObjectResult;
 use utils;
 
@@ -63,16 +62,6 @@ abstract class Attachments extends Base {
 		
 		$oReportData = Helper::GetData();
 
-		/** @var DBObjectSet|null $oSet_Objects iTop objects. */
-		$oSet_Objects = Helper::GetObjectSet(true);
-
-		// Get keys to build one OQL Query
-		$aKeys = [ -1];
-		
-		while($oObj = $oSet_Objects->Fetch()) {
-			$aKeys[] = $oObj->GetKey();
-		}
-		
 		// In case of 'list':
 		if(property_exists($oReportData, 'items') && count($oReportData->items) > 0) {
 
@@ -108,7 +97,7 @@ abstract class Attachments extends Base {
 
 			// Attachments are linked to one object only.
 			// So it's okay to just convert it here when needed.
-			$oObjRes->attachments = static::GetAttachments($oObj->class, [ $oObj->key ]);
+			$oObjRes->attachments = static::GetAttachments($oObjRes->class, [ $oObjRes->key ]);
 
 		}
 	
