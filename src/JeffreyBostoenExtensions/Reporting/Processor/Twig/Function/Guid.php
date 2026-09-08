@@ -11,7 +11,7 @@ namespace JeffreyBostoenExtensions\Reporting\Processor\Twig\Function;
 /**
  * Class Guid. Provides a Twig filter to return a 32 character GUID.
  */
-abstract class Guid extends Base {
+class Guid extends Base {
     
     /**
      * @inheritDoc
