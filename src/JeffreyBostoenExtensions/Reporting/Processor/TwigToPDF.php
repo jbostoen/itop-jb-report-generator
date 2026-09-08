@@ -21,6 +21,7 @@ use DBObjectSet;
 use iTopStandardURLMaker;
 use MetaModel;
 use ormDocument;
+use SecurityException;
 use UserRights;
 use utils;
 
@@ -160,6 +161,11 @@ abstract class TwigToPDF extends Twig {
 	 * This is split into a standalone function, so it's easy to extend or override.
 	 */
 	public static function AttachToHostObject(string $sPDF, string $sFileName, string $sObjClass, int $iObjId) : Attachment {
+
+		// Refuse silently bypassing the normal authorization checks that apply when creating an Attachment.
+		if(UserRights::IsActionAllowed('Attachment', UR_ACTION_CREATE) != UR_ALLOWED_YES) {
+			throw new SecurityException('Not allowed to create an Attachment.');
+		}
 
 		// Create attachment.
 		/** @var Attachment $oAttachment */
