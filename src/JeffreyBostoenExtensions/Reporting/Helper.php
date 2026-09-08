@@ -13,6 +13,7 @@ use JeffreyBostoenExtensions\Reporting\Processor\Twig as TwigProcessor;
 // Generic.
 use Exception;
 use stdClass;
+use Throwable;
 
 // iTop internals.
 use DBObject;
@@ -442,12 +443,12 @@ abstract class Helper {
 				), FILE_APPEND | LOCK_EX);
 
 			}
-			catch(Exception $e) {
-				// Don't do anything
+			catch(Throwable $e) {
+				// Don't do anything. sprintf() can throw a ValueError (e.g. a stray "%" in $sMessage), which is not an Exception.
 			}
-			
+
 		}
-		
+
 	}
 	
 	
