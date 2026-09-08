@@ -100,7 +100,7 @@ abstract class Twig extends Base {
 		
 		// 2.7: Don't use utils::GetCurrentModuleDir(0).
 		// When new reports are added with a different extension/module, it should return that path instead.
-		$sReportModuleDir = utils::GetAbsoluteModulePath(utils::ReadParam('reportdir', '', 'string'));
+		$sReportModuleDir = utils::GetAbsoluteModulePath(utils::ReadParam('reportdir', '', false, 'string'));
 
 		// Modern: Actually use the template name.
 		$sReportFile = $sReportModuleDir.$sTemplateName;
