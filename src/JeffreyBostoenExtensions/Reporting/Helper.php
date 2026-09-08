@@ -232,8 +232,8 @@ abstract class Helper {
 				}
 				
 				$aSet_Objects = static::ConvertDBObjectSetToObjectResultArray(static::$oSet);
-				
-				if(static::GetView() === 'details') {
+
+				if(static::GetView() === 'details' && count($aSet_Objects) > 0) {
 					$oReportData->item = array_values($aSet_Objects)[0];
 				}
 				else {

@@ -64,7 +64,7 @@ abstract class TwigToPDF extends Twig {
 			);
 
 		}
-		elseif(property_exists($oReportData, 'items')) {
+		elseif(property_exists($oReportData, 'items') && count($oReportData->items) > 0) {
 
 			$oItem = $oReportData->items[0];
 			return sprintf('%1$s_%2$s_list.pdf',
@@ -72,6 +72,16 @@ abstract class TwigToPDF extends Twig {
 				$oItem->class
 			);
 
+		}
+
+		// Empty or missing object set: the class is not available from a fetched item,
+		// but it can still be derived from the underlying DBObjectSet's filter.
+		$oSet = Helper::GetObjectSet(false);
+		if($oSet !== null) {
+			return sprintf('%1$s_%2$s_list.pdf',
+				date('Ymd_His'),
+				$oSet->GetClass()
+			);
 		}
 
 		// Perhaps the report did not contain any iTop object(s) data.
@@ -89,17 +99,19 @@ abstract class TwigToPDF extends Twig {
 
 			$oReportData = Helper::GetData();
 
+			$oItem = null;
+
 			if(property_exists($oReportData, 'item')) {
 
 				$oItem = $oReportData->item;
 
 			}
-			elseif(property_exists($oReportData, 'items')) {
+			elseif(property_exists($oReportData, 'items') && count($oReportData->items) > 0) {
 
 				$oItem = $oReportData->items[0];
 
 			}
-			
+
 			/** @var Spatie\Browsershot\Browsershot $oPDF PDF Object */
 			$sBase64 = static::GetPDFObject();
 			$sPDF = base64_decode($sBase64);
@@ -118,7 +130,11 @@ abstract class TwigToPDF extends Twig {
 					break;
 					
 				case 'attach_pdf':
-				
+
+					if($oItem === null) {
+						throw new ApplicationException('Cannot attach PDF: the report does not contain any iTop object.');
+					}
+
 					static::AttachToHostObject($sPDF, $sFileName, $oItem->class, $oItem->key);
 					
 					// Go back.
