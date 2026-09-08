@@ -137,10 +137,9 @@ abstract class Twig extends Base {
 		}
 		
 		// Prevent local file inclusion
-		// Mind: needs extra escaping!
 		if(!preg_match('/^[A-Za-z0-9\-_\\\\\/\:]{1,}\.[A-Za-z0-9]{1,}$/', $sTemplateName)) {
-			Helper::Trace('Potential local file inclusion: '.$sReportFile);
-			throw new ApplicationException('Potential local file inclusion detected (LFI). This path is not allowed: "'.$sReportFile.'"');
+			Helper::Trace('Potential local file inclusion: %1$s', $sReportFile);
+			throw new ApplicationException('Potential local file inclusion detected (LFI). This path is not allowed: "'.utils::HtmlEntities($sReportFile).'"');
 		}
 		
 		$sReportFile = str_replace(APPROOT.'env-'.utils::GetCurrentEnvironment().'/', '', $sReportFile);
