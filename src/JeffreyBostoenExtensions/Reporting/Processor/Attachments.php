@@ -11,6 +11,7 @@ namespace JeffreyBostoenExtensions\Reporting\Processor;
 use JeffreyBostoenExtensions\Reporting\Helper;
 
 // iTop internals
+use ApplicationException;
 use CMDBObjectSet;
 use DBObjectSearch;
 use ObjectResult;
@@ -42,8 +43,14 @@ abstract class Attachments extends Base {
 				
 			// Does the file contain an indication of '.attachments' and the use of 'fields.contents' (.data, .mimetype, .filename)?
 			$sFileName = Twig::GetReportFileName();
-			$sContent = file_get_contents(APPROOT.'env-'.utils::GetCurrentEnvironment().'/'.$sFileName);
-			
+			$sFilePath = APPROOT.'env-'.utils::GetCurrentEnvironment().'/'.$sFileName;
+
+			if(!file_exists($sFilePath)) {
+				throw new ApplicationException('Template does not exist.');
+			}
+
+			$sContent = file_get_contents($sFilePath);
+
 			if(preg_match('/\.attachments/', $sContent) && preg_match('/fields\.contents\.(data|mimetype|filename)/', $sContent)) {
 			
 				return true;
