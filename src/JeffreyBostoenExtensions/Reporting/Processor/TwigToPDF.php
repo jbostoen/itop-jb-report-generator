@@ -348,15 +348,19 @@ abstract class TwigToPDF extends Twig {
 				
 				// Process response.
 				$oData = json_decode($response);
-				
+
 				if(json_last_error() !== JSON_ERROR_NONE) {
 					throw new Exception('Invalid JSON structure: '.$response);
 				}
-				
-				if($oData->error != 0) {
-					throw new Exception('Failed to render PDF. Error code: '.$oData->error.', message: '.$oData->message);
+
+				if(!is_object($oData) || !property_exists($oData, 'error') || !property_exists($oData, 'pdf')) {
+					throw new Exception('Unexpected response structure from external PDF renderer: '.$response);
 				}
-				
+
+				if($oData->error != 0) {
+					throw new Exception('Failed to render PDF. Error code: '.$oData->error.', message: '.($oData->message ?? ''));
+				}
+
 				$sData = $oData->pdf;
 				
 			}
