@@ -587,7 +587,7 @@ abstract class Helper {
 	 */
 	public static function SetSuppressOutput(bool $bValue) : void {
 		
-		static::Trace('Suppress output: ', $bValue ? 'yes' : 'no');
+		static::Trace('Suppress output: %1$s', $bValue ? 'yes' : 'no');
 		static::$bSuppressOutput = $bValue;
 		
 	}
