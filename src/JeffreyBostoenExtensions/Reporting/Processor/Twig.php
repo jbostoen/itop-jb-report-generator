@@ -133,6 +133,14 @@ abstract class Twig extends Base {
 				}
 
 			}
+			else {
+
+				// No object set (e.g. no "filter" request parameter): there is no legacy alternative
+				// path to fall back to either, so the primary file simply does not exist.
+				Helper::Trace('Template does not exist: %1$s', $sReportFile);
+				throw new ApplicationException('Template does not exist.');
+
+			}
 
 		}
 		
