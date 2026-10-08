@@ -73,7 +73,7 @@ SetupWebPage::AddModule(
                 'settings' => array(
                         // Module specific settings go here, if any
                         // This is a demo configuration for a Windows system
-                        'trace_log' => true,
+                        'trace_log' => false,
                         'browsershot' => array(
                                 'node_binary' => 'node.exe', // Directory with node binary is in an environmental variable
                                 'npm_binary' => 'npm.cmd', // Directory with NPM cmd file is in an environmental variable
