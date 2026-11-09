@@ -56,6 +56,8 @@ abstract class UserRequestDetails extends BaseShowPDF {
 
 # Variables in reports
 
+Note: Output is **not** escaped automatically. See [Best practices](best_practices.md).
+
 The reports are rendered using [Twig](https://github.com/twigphp/Twig) .  
 
 
