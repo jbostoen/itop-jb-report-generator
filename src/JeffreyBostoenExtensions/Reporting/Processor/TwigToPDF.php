@@ -113,6 +113,12 @@ abstract class TwigToPDF extends Twig {
 			}
 
 			/** @var Spatie\Browsershot\Browsershot $oPDF PDF Object */
+			// Attaching changes data, so a valid single-use transaction token is required (protection against CSRF).
+			// This is verified before the (expensive) PDF is rendered.
+			if(utils::ReadParam('action', '', false, 'string') === 'attach_pdf' && !utils::IsTransactionValid(utils::ReadParam('transaction_id', '', false, 'transaction_id'), true)) {
+				throw new SecurityException('Invalid or expired transaction. Please try again from the object.');
+			}
+
 			$sBase64 = static::GetPDFObject();
 			$sPDF = base64_decode($sBase64);
 			
@@ -151,6 +157,13 @@ abstract class TwigToPDF extends Twig {
 			
 				
 		}
+		catch(SecurityException $e) {
+
+			// Authorization problems must not be swallowed; the caller shows an access denied page.
+			Helper::Trace('%1$s denied: %2$s', __METHOD__, $e->getMessage());
+			throw $e;
+
+		}
 		catch(Exception $e) {
 
 			Helper::Trace('%1$s failed: %2$s', __METHOD__, $e->getMessage());
@@ -181,6 +194,12 @@ abstract class TwigToPDF extends Twig {
 		// Refuse silently bypassing the normal authorization checks that apply when creating an Attachment.
 		if(UserRights::IsActionAllowed('Attachment', UR_ACTION_CREATE) != UR_ALLOWED_YES) {
 			throw new SecurityException('Not allowed to create an Attachment.');
+		}
+
+		// The user must also be allowed to modify the object the attachment is added to.
+		$oHostObject = MetaModel::GetObject($sObjClass, $iObjId, false);
+		if($oHostObject === null || UserRights::IsActionAllowed($sObjClass, UR_ACTION_MODIFY, DBObjectSet::FromObject($oHostObject)) != UR_ALLOWED_YES) {
+			throw new SecurityException('Not allowed to modify the object.');
 		}
 
 		// Create attachment.

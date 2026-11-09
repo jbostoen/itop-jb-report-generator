@@ -126,13 +126,19 @@ class Menu implements iPopupMenuExtension {
 				// Add shortcut (button) or keep menu item?
 				static::$shortcut_actions .= ($sReport::ForceButton() == true ? ','.$sUID : '');
 				
+				// Actions that change data get a single-use transaction token.
+				$aURLParameters = $sReport::GetURLParameters();
+				if(method_exists($sReport, 'RequiresTransaction') && $sReport::RequiresTransaction()) {
+					$aURLParameters['transaction_id'] = utils::GetNewTransactionId();
+				}
+
 				// URL should pass location of the report (folder/report) and the OQL query for the object(s).
 				$sURL = utils::GetAbsoluteUrlExecPage().'?'.
 					'&exec_module='.Helper::MODULE_CODE.
 					'&exec_page=reporting.php'.
 					'&exec_env='.utils::GetCurrentEnvironment().
 					'&view='.$sView.
-					(count($sReport::GetURLParameters()) > 0 ? '&'.http_build_query($sReport::GetURLParameters()) : '')
+					(count($aURLParameters) > 0 ? '&'.http_build_query($aURLParameters) : '')
 				;
 
 				// Only if a filter was set:

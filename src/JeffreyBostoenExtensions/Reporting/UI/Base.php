@@ -129,6 +129,18 @@ abstract class Base implements iBase {
 	}
 
 	/**
+	 * Whether the generated URL needs a single-use transaction token (parameter "transaction_id").  
+	 * This should be enabled for actions that change data, to protect against cross-site request forgery.
+	 * 
+	 * Note: This is not part of the iBase interface to stay compatible with existing implementations.
+	 *
+	 * @return bool
+	 */
+	public static function RequiresTransaction() : bool {
+		return false;
+	}
+
+	/**
 	 * @inheritDoc
 	 */
 	public static function MatchesURLParameters() : bool {

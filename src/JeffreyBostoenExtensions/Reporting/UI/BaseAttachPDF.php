@@ -27,6 +27,13 @@ abstract class BaseAttachPDF extends Base {
 	
 	/**
 	 * @inheritDoc
+	 */
+	public static function RequiresTransaction() : bool {
+		return true;
+	}
+
+	/**
+	 * @inheritDoc
 	*/
 	public static function GetTitle() : string {
 		
