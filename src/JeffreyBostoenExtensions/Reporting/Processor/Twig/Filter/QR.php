@@ -65,10 +65,11 @@ class QR extends Base {
             $oQRCode = new QRCode($oOptions);
 
             try {
-                return sprintf('<!-- %2$s --><img class="qr" src="%1$s">', $oQRCode->render($sString), $sString);
+                // The encoded string is deliberately not echoed in a comment: a value containing "-->" would allow HTML injection.
+                return sprintf('<img class="qr" src="%1$s">', $oQRCode->render($sString));
             }
             catch(Exception $e) {
-                return sprintf('<!-- Failed to create QR code for: %1$s -->', $sString);
+                return '<!-- Failed to create QR code. -->';
             }
     
         };
