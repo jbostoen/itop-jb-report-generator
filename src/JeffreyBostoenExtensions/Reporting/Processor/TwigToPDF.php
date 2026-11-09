@@ -12,6 +12,7 @@ use JeffreyBostoenExtensions\Reporting\Helper;
 
 // Generic
 use Exception;
+use Throwable;
 
 // iTop internals
 use ApplicationException;
@@ -253,8 +254,13 @@ abstract class TwigToPDF extends Twig {
 				
 				$oBrowsershot = new Browsershot();
 				
-				$iTimeout = utils::ReadParam('timeout', 60, 'integer');
-				$sPageFormat = utils::ReadParam('page_format', 'A4', 'raw');
+				// Mind the argument order: name, default value, allow CLI, sanitization filter.
+				// The sanitization filter for an integer returns a string (empty if there are no digits), so it is cast explicitly.
+				$iTimeout = (int)utils::ReadParam('timeout', 60, false, 'integer');
+				if($iTimeout < 1) {
+					$iTimeout = 60;
+				}
+				$sPageFormat = utils::ReadParam('page_format', 'A4', false, 'parameter');
 				
 				$oBrowsershot
 					// ->setURL('https://google.be')
@@ -392,7 +398,7 @@ abstract class TwigToPDF extends Twig {
 			return $sData;
 
 		}
-		catch(Exception $e) {
+		catch(Throwable $e) {
 
 			Helper::Trace('TwigToPDF GetPDFObject() failed: %1$s', $e->getMessage());
 			throw new Exception('Unable to generate PDF.');

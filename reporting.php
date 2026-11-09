@@ -33,7 +33,7 @@ use utils;
 use Combodo\iTop\Application\WebPage\NiceWebPage;
 
 // Generic.
-use Exception;
+use Throwable;
 		
 	if (!defined('APPROOT')) require_once(__DIR__.'/../../approot.inc.php');
 	require_once(APPROOT.'/application/application.inc.php');
@@ -71,7 +71,7 @@ use Exception;
 		
 
 	}
-	catch(Exception $e) {
+	catch(Throwable $e) {
 		
 		if($e instanceof SecurityException) {
 			http_response_code(403);
