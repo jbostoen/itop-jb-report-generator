@@ -66,7 +66,7 @@ abstract class TwigToPDF extends Twig {
 		}
 		elseif(property_exists($oReportData, 'items') && count($oReportData->items) > 0) {
 
-			$oItem = $oReportData->items[0];
+			$oItem = reset($oReportData->items);
 			return sprintf('%1$s_%2$s_list.pdf',
 				date('Ymd_His'),
 				$oItem->class
@@ -108,7 +108,7 @@ abstract class TwigToPDF extends Twig {
 			}
 			elseif(property_exists($oReportData, 'items') && count($oReportData->items) > 0) {
 
-				$oItem = $oReportData->items[0];
+				$oItem = reset($oReportData->items);
 
 			}
 

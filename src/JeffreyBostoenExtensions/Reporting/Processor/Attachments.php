@@ -81,7 +81,8 @@ abstract class Attachments extends Base {
 				return $oObjRes->key;
 			}, $oReportData->items);
 
-			$sObjClass = $oReportData->items[0]->class;
+			// Items are keyed by class and ID, so the first one is fetched without relying on a numeric index.
+			$sObjClass = reset($oReportData->items)->class;
 			$aObjResAttachments = static::GetAttachments($sObjClass, $aObjIds);
 
 			/** @var stdClass $oObjRes */
