@@ -82,7 +82,7 @@ use Exception;
 
 		$oP = new NiceWebPage(Dict::S('UI:PageTitle:FatalError'));
 		$oP->add("<h1>".Dict::S('UI:FatalErrorMessage')."</h1>");	
-		$oP->add(Dict::Format('UI:Error_Details', $e->getMessage()));	
+		$oP->add(Dict::Format('UI:Error_Details', utils::HtmlEntities($e->getMessage())));	
 		$oP->output();
 		
 	}
