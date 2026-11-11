@@ -21,11 +21,14 @@ use DBObjectSearch;
 use DBObjectSet;
 use MetaModel;
 use ObjectResult;
+use SecurityException;
 use UserRights;
 use utils;
+use const UR_ACTION_READ;
+use const UR_ALLOWED_YES;
 
 /**
- * Abstract class Helper. 
+ * Abstract class Helper.
  */
 abstract class Helper {
 	
@@ -96,6 +99,29 @@ abstract class Helper {
 
 	}
 	
+
+	/**
+	 * Throws an exception if the current user may not read objects of the given class.
+	 *
+	 * Processors which query additional classes (e.g. in EnrichData()) should call this first.
+	 * Only an unconditional permission is accepted. UserRights::IsActionAllowed() returns a tri-state value, so a plain truthiness check would also let UR_ALLOWED_DEPENDS through.
+	 * The result only reflects the class-level permission. Row-level restrictions are still applied by iTop (scopes) for most business classes.
+	 *
+	 * @param string $sClass Class name.
+	 *
+	 * @return void
+	 *
+	 * @throws SecurityException
+	 */
+	public static function AssertReadAllowed(string $sClass) : void {
+
+		if(UserRights::IsActionAllowed($sClass, UR_ACTION_READ) !== UR_ALLOWED_YES) {
+			static::Trace('Read access to class %1$s denied.', $sClass);
+			throw new SecurityException('Not allowed to read this class.');
+		}
+
+	}
+
 
 	/**
 	 * Converts an iTop object set (DBObjectSet) to an array of iTop REST/JSON API-like objects (based on ObjectResult, but stdClass for full extensibility).
@@ -358,6 +384,11 @@ abstract class Helper {
 				
 			$oFilter = DBObjectSearch::unserialize($sFilter);
 			static::Trace('Filter: %1$s', $sFilter);
+
+			// The filter is user input. Make sure the user is allowed to read every selected class.
+			foreach($oFilter->GetSelectedClasses() as $sSelectedClass) {
+				static::AssertReadAllowed($sSelectedClass);
+			}
 
 			// For performance purposes; a new in-memory set is created.
 			static::$oSet = Helper::GetInMemoryObjectSet($oFilter);

@@ -12,10 +12,14 @@ use JeffreyBostoenExtensions\Reporting\Helper;
 
 // iTop internals
 use ApplicationException;
+use Attachment;
 use CMDBObjectSet;
 use DBObjectSearch;
 use ObjectResult;
+use UserRights;
 use utils;
+use const UR_ACTION_READ;
+use const UR_ALLOWED_YES;
 
 
 /**
@@ -66,6 +70,11 @@ abstract class Attachments extends Base {
 	 * @inheritDoc
 	 */
 	public static function EnrichData() : void {
+
+		// Attachments are only added if the user may read them.
+		if(UserRights::IsActionAllowed(Attachment::class, UR_ACTION_READ) !== UR_ALLOWED_YES) {
+			return;
+		}
 		
 		$oReportData = Helper::GetData();
 
@@ -122,7 +131,7 @@ abstract class Attachments extends Base {
 	private static function GetAttachments(string $sObjClass, array $aObjIds) : array {
 
 		// Retrieve attachments.
-		$oFilter_Attachments = new DBObjectSearch('Attachment');
+		$oFilter_Attachments = new DBObjectSearch(Attachment::class);
 		$oFilter_Attachments->AddCondition('item_id', $aObjIds, 'IN');
 		$oFilter_Attachments->AddCondition('item_class', $sObjClass);
 		$oSet_Attachments = new CMDBObjectSet($oFilter_Attachments);
